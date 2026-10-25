@@ -1,0 +1,12 @@
+{
+  "schema_version": "1",
+  "stage": "foundation",
+  "production_ready": false,
+  "profiles": [
+    {
+      "profile_id": "FHE-Q1",
+      "enabled": false,
+      "qualification": "unqualified"
+    }
+  ]
+}
