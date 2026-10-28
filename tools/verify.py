@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -28,6 +29,7 @@ def main() -> None:
         run("cargo", "fmt", "--all", "--check")
         run("cargo", "clippy", "--locked", "--workspace", "--all-targets", "--", "-D", "warnings")
     if args.level == "full":
+        os.environ["KRYVOLA_RELEASE_SIGNATURE_TESTS"] = "1"
         run(sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v")
         if REPO in {"kryvola-fabric", "kryvola-engines"}:
             run("cargo", "test", "--locked", "--workspace")

@@ -21,3 +21,11 @@ CI is configured on pull requests/main pushes with commit-pinned actions, `conte
 No `.codex/config.toml` or repository skill is needed for the current workflow. Root instructions link detailed sources on demand and preserve the configured model/reasoning effort. Scoped instruction files are unnecessary because responsibilities do not yet require different agent rules.
 
 Platform may consume published packages/images from all four repositories, as required by design 4.3. Its guard rejects local source dependencies rather than incorrectly forbidding those approved artifact dependencies. Other runtime repositories reject foreign implementation imports and dependencies.
+
+M0-PR17 adds a separate [release-set admission boundary](release-set.md) using the
+spec-generated ReleaseCandidate schema. Exact local bytes and signed provenance
+must match an independently selected release policy, public keys, component/source
+pins and schema manifest. Cosign is a checksum-pinned standalone verifier, not an
+application package; runtime admission does not download tools or artifacts.
+The foundation inventory stays unchanged. Admission remains integration-only;
+published artifact, SBOM and production qualification gates are still pending.

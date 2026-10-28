@@ -15,6 +15,9 @@ REPO = "kryvola-platform"
 IMPLEMENTATIONS = {"kryvola_fabric", "kryvola_engines", "kryvola_ml", "kryvola_platform"}
 
 REQUIRED_ARTIFACTS = {
+    "profiles/ReleaseCandidate.schema.json",
+    "profiles/ModelDescriptor.schema.json",
+    "profiles/MeasurementReport.schema.json",
     "python/limits.py",
     "artifact-ref.schema.json",
     "limits.json",

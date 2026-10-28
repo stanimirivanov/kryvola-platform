@@ -1,5 +1,24 @@
 # Foundation progress
 
+## M0-PR17 — immutable integration inputs
+
+Issue: #3. Consumes generated spec preview.10 at
+`1a5b57a590487ba116913050af8041f5e5f1fb52` and adds a separate release-set validator.
+It checks exact component/artifact/schema/source bindings, selected signing keys,
+builder/provenance identity, model/report consistency and reviewed legal scope.
+The existing foundation inventory remains disabled; the checked-in synthetic
+release candidate remains unresolved and cannot be admitted.
+
+Local policy tests and fast formatting/lint/type/provenance checks are observed
+separately from real cryptographic acceptance: the real Cosign signed fixture,
+wrong-key/changed-byte negatives and wheel build are mandatory full CI checks.
+Observed locally: fast checks and 12 tests passed; the signature integration test
+was skipped locally and its CI result has not been observed.
+No real published artifacts, SBOMs, crypto qualification, service deployment or
+production profile activation is claimed. PR24/32 retain publication qualification.
+
+## Initial scaffold
+
 Issue: #1. Scope: initial M0 repository scaffold, 25 October 2026.
 
 - Implemented: python platform inventory and qualification harness, versioned spec consumption, isolated architecture controls and diagnostics.

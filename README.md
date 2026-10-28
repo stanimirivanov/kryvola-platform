@@ -9,6 +9,7 @@ Prerequisites: Python 3.14.7 and uv 0.12.5. Python is pinned in `.python-version
 ```sh
 uv sync --locked
 uv run --locked python tools/verify.py fast
+uv run --locked python tools/install_cosign.py
 uv run --locked python tools/verify.py full
 uv run --locked python -m kryvola_platform config/foundation.json
 ```
@@ -16,6 +17,21 @@ uv run --locked python -m kryvola_platform config/foundation.json
 `fast` runs formatting/lint/type/provenance/dependency checks. `full` adds isolated positive/negative controls, contract tests and a wheel build. Missing tools or files fail the command. Apply Python formatting with `uv run --locked ruff format .` and lint fixes with `uv run --locked ruff check --fix .`; rerun affected checks after changes.
 
 No service credentials or local databases are required for this scope. `spec.lock.json` pins immutable generated spec artifacts; a sibling checkout is unnecessary. Generated structural types are not native decoders or authorization. [Architecture and enforcement](docs/architecture.md), [progress](docs/progress.md), and the source references below describe limits.
+
+## M0 release-set inputs
+
+`release_set.validate_release_set` and `inventory.validate_release_inventory`
+admit local integration inputs against independently supplied `ReleasePolicy`,
+`ComponentPolicy` and checksum-pinned `Cosign` configuration. The separately
+versioned spec preview.10 `ReleaseCandidate` format is used; the foundation API
+and `config/foundation.json` remain disabled. `config/release-candidate.json` is
+an unresolved synthetic **rejection example**, with no default trust keys.
+
+The [release-set boundary](docs/release-set.md) specifies signing mode, provenance
+fields, artifact references, limits and remaining qualification work. Full checks
+install the pinned standalone verifier explicitly and exercise real signatures
+with ephemeral test keys. Keep the full build/signature gate on CI when local
+resources are busy; focused tests intentionally skip that integration case.
 
 ## Authoritative context
 
