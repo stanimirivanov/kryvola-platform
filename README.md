@@ -41,4 +41,9 @@ resources are busy; focused tests intentionally skip that integration case.
 
 Platform composes released artifacts from the other repositories; it does not own their cryptographic implementations. Unqualified profiles remain disabled. Kubernetes/Ray/broker identities cannot hold private decryption keys. No cloud, service or secret is provisioned by foundation checks.
 
-Next planned work: KRY-006 reproducible benchmark harness, followed by KRY-010 the fake-engine local stack once contract prerequisites are satisfied.
+The [local benchmark runner](docs/benchmark.md) collects bounded subprocess
+observations and descriptive statistics. It does not qualify a MeasurementReport
+or enable a cryptographic profile. Heavy verification runs on CI.
+
+Next planned work: KRY-006 resource/network controls and real workload benchmarks,
+followed by KRY-010 the fake-engine local stack once prerequisites are satisfied.

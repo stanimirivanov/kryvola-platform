@@ -31,6 +31,7 @@ def main() -> None:
     if args.level == "full":
         os.environ["KRYVOLA_RELEASE_SIGNATURE_TESTS"] = "1"
         run(sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v")
+        run(sys.executable, "tools/benchmark.py", "self-test")
         if REPO in {"kryvola-fabric", "kryvola-engines"}:
             run("cargo", "test", "--locked", "--workspace")
         if REPO == "kryvola-engines":

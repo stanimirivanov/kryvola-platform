@@ -1,5 +1,15 @@
 # Foundation progress
 
+## M0-PR25 — reproducible local observations
+
+Issue: #5. Adds the bounded Linux subprocess benchmark runner, spec-validated
+metadata, raw attempt journal, separate warmup/measured statistics, explicit
+failures and descriptive sample sufficiency. No crypto profile is qualified.
+Formatting/lint fixes, fast checks and focused metadata/statistics tests run
+locally; Linux supervision, the synthetic self-test and full signature/build
+checks run on CI. These CI checks are configured, not claimed to have passed.
+Resource/network controls and real workload feasibility remain pending.
+
 ## M0-PR17 — immutable integration inputs
 
 Issue: #3. Consumes generated spec preview.10 at
