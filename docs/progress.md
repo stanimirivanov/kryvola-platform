@@ -73,3 +73,17 @@ Root AGENTS.md discovery through nested working directories and local documentat
 Blocked foundation work: none. Deferred roadmap items and remote CI/maintainer settings above remain explicit; this evidence does not qualify a production crypto engine, state machine or deployment.
 
 Final harness-only normalization of package names and direct local URI dependencies was verified with Ruff, ty and the Python suite. Native code and package runtime content were unchanged after their passing build/clean-install checks.
+
+## M0-PR31 — published fake workflow
+
+Issue #11 composes the approved published fabric wheel and fake-engine archive
+through Redpanda, Temporal and Ray, with version/hash-checked public trigger and
+receipt artifacts, actual history replay, and separate SQL harness evidence.
+The [scope and gates](fake-workflow.md) explicitly identify the native binary's
+loopback self-test and unresolved external dispatch/crypto/registry work. No
+production profile or release-set qualification is enabled.
+
+Observed locally: both publishers succeeded; actual keyless manifest verification,
+asset/source/spec pins, formatting/lint/types and 38 Python tests passed (five
+Linux/full-signature checks deferred to CI). Full service traversal and final
+pre-PR CI evidence are recorded in the PR. No local services were started.

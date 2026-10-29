@@ -21,7 +21,9 @@ jobs:
           version: "0.12.5"
       - run: uv sync --locked
       - run: uv run --locked python tools/install_cosign.py
-      - run: uv run --locked python tools/verify.py full
+      - run: uv run --locked python tools/workflow_assets.py install
+      - run: uv sync --locked --extra conformance
+      - run: uv run --locked --extra conformance python tools/verify.py full
       - run: uv run --locked python -m kryvola_platform config/foundation.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
@@ -30,5 +32,6 @@ jobs:
           path: |
             build/integration/*/network-report.json
             build/integration/*/network-observations.jsonl
+            build/integration/*/fake-workflow-report.json
           if-no-files-found: ignore
           retention-days: 7

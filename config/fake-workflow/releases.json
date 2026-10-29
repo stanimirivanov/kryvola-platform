@@ -1,0 +1,24 @@
+{
+  "fabric": {
+    "source": "f02281ffa78decb6acd032c102359bf758f92a3a",
+    "assets": {
+      "kryvola_fabric-0.1.0.dev0+gf02281ffa78decb6acd032c102359bf758f92a3a-py3-none-any.whl": "1181a6557b18fbf55933451fff8d616a6b5cbe3c019f4e56e3a0523623b0f0ec",
+      "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "manifest.json": "c6f87e6764a4113d5d3c1aaf972255c9da27f47facbf7b3e6f69c7122b2cb9b1",
+      "manifest.sigstore.json": "3c29ae6a762340bbb2534ad36e13cb39d48fd1c4794407bcf540c916491f2e67",
+      "provenance.json": "d80712504fc371a8d809655530a9a791fb9b4f07c98ff3945c71663bf3eac22f",
+      "sbom.spdx.json": "1f43a908d1e3a99704f19266a8c0cbeb53a44ee468a53f25e942d2a14a03cd57",
+      "uv.lock": "1f1b940fbeef50ebe6d6a57feec3ad13e5a1d1648aa7b343d539469634808b81"
+    }
+  },
+  "engines": {
+    "source": "f8023959081fa6a1e8169b41ef427630a5da72f3",
+    "assets": {
+      "manifest.json": "6fed8a78521340847fb852731a18b03359d4bb1aa7b408511a91495fdf52945c",
+      "manifest.sigstore.json": "16d91d75fcd0fd29efebed4d2d6649ece80997908c99176158646336566f8408",
+      "package.tar": "f4c524cb03e9ab8a14642bf607b9e8216c516e4922a93765bbaecd097462d704",
+      "provenance.json": "f664215f509d2811b11f08fe73357aa00aaf5fb3a4ea2107cae00b855846fa1c",
+      "sbom.json": "26277ad6505f9dec7982cf099c4133ef95f8f895c6fed38d38d0b189914e1e18"
+    }
+  }
+}

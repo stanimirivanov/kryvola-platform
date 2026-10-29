@@ -52,3 +52,9 @@ or enable a cryptographic profile. Heavy verification runs on CI.
 
 Next planned work: KRY-006 resource/network controls and real workload benchmarks,
 followed by KRY-010 the fake-engine local stack once prerequisites are satisfied.
+
+M0-PR31 adds the [published public fake workflow](docs/fake-workflow.md).
+Install Cosign, run `uv run --locked python tools/workflow_assets.py install`, then
+`uv sync --locked --extra conformance` before the full gate. Full checks use
+`uv run --locked --extra conformance python tools/verify.py full`; fast checks
+still start no services. The standalone traversal is `tools/integration.py smoke`.

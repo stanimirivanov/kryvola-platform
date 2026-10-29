@@ -317,13 +317,25 @@ class Stack:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["check", "up", "down"])
+    parser.add_argument("command", choices=["check", "up", "down", "smoke"])
     args = parser.parse_args()
     if args.command == "check":
         configuration()
         print("Fixture configuration valid; no services started")
     elif args.command == "up":
         Stack("kryvola-m0-" + secrets.token_hex(6)).up()
+    elif args.command == "smoke":
+        if __package__:
+            from .fake_workflow import smoke
+        else:
+            from fake_workflow import smoke
+        stack = Stack("kryvola-m0-" + secrets.token_hex(6))
+        try:
+            stack.up()
+            smoke(stack)
+        finally:
+            if stack.claimed and ACTIVE.exists():
+                stack.down()
     else:
         Stack(json.loads(ACTIVE.read_text())["project"]).down()
 
