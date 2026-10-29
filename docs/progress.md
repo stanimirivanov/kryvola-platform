@@ -116,3 +116,20 @@ security qualification is introduced.
 Observed locally: formatting/lint/types and offline controls passed. The full
 pre-PR CI result and retained isolation report are recorded in the PR. No local
 Docker services or heavy native builds were started.
+
+## M0-PR34 — fixed-source research campaigns
+
+Issue #17 adds the pinned [FHE-Q1 campaign harness](campaigns.md) and numeric
+captures from two independent engine workflow attempts, preserving research-only
+execution in the owning repository and all crypto distribution/service denials.
+The adapter validates source/lock/fixture and numeric/proof accounting, retains
+raw observations and failures, and computes exact descriptive variance separately
+for native FHE, compact validity and public-metadata Core proof experiments.
+Missing transport/cache/end-to-end stages and sparse owner/proof samples remain
+explicitly INCONCLUSIVE; production/profile flags stay false.
+
+Observed: both complete engines workflow attempts passed; two fresh key contexts,
+200 correlated circuit observations and four separate Core samples are captured.
+The checked-in summary replays exactly, retaining all missing-stage reasons and
+INCONCLUSIVE qualification. The final pre-PR platform CI result is recorded in the PR.
+No crypto binary, owner key, ciphertext or proof object is imported into platform.

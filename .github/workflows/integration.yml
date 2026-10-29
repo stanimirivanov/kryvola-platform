@@ -38,5 +38,6 @@ jobs:
             build/integration/*/fake-workflow-report.json
             build/integration/*/release-conformance-report.json
             build/integration/*/isolation-report.json
+            build/campaigns/*/summary.json
           if-no-files-found: ignore
           retention-days: 7

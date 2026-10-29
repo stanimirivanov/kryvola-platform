@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "kind": "FHE_Q1_RESEARCH_CAMPAIGNS",
+  "repository": "stanimirivanov/kryvola-engines",
+  "source": "f8023959081fa6a1e8169b41ef427630a5da72f3",
+  "run_id": 40863854972,
+  "attempts": [
+    1,
+    2
+  ],
+  "source_files": {
+    "experiments/tfhe/Cargo.lock": "538b6fb542f806bc38fb9773c285971aec6f02a9af94c84185fa02db3216991d",
+    "experiments/sp1/Cargo.lock": "e8ebfbe6b2cb50cbafd7f6c2431017b7cc28235b0ac5f563cc4d8cf7649ff38b",
+    "config/dependency-policy.json": "3a6c7bf328b5adbd34202d21a486e1ea623225d4e19bc2e26707daa187e6d4bc",
+    "experiments/tfhe/fixture.lock.json": "3ad30b88ffdbe876739edd90f6ede489a003c0d15b0943d873d01ea4d7af858a",
+    "experiments/sp1/profiles/modes.json": "e52231b02ab2884847d890a03ed4d3744edf49ea062e271400cbff722a1a64b8",
+    "rust-toolchain.toml": "c910997cb152c6dc8ed13b1fdf9fa28a4ed30d6776123e27dd6170e5c66067a0"
+  },
+  "fixture_source": "dcba320678eb454047e29c8a42417ffe8d94a323",
+  "fixture_manifest_sha256": "16268b514e2d8618113d439052975909dd8642bb3c374c1e6bf53a2d477bac21",
+  "observations": "../../evidence/feasibility/fhe-q1",
+  "required_unmeasured_stages": [
+    "key_upload",
+    "authorized_key_cache_miss",
+    "actual_network_transfer",
+    "owner_to_owner_end_to_end"
+  ],
+  "production_qualified": false
+}
