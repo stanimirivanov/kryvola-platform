@@ -41,10 +41,20 @@ def main() -> None:
     parser.add_argument("action", choices=["self-test", "run", "network-check"])
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--profile", type=Path)
+    parser.add_argument("--capture-attempt", type=int)
     parser.add_argument("--check-only", action="store_true")
     args = parser.parse_args()
-    if args.check_only and args.action != "network-check":
-        parser.error("--check-only is supported only for network-check")
+    if args.profile and (args.action != "run" or args.manifest):
+        parser.error("--profile requires run and cannot combine with --manifest")
+    if args.capture_attempt is not None and not args.profile:
+        parser.error("--capture-attempt requires --profile")
+    if args.capture_attempt is not None and (args.check_only or args.output):
+        parser.error("--capture-attempt cannot combine with --check-only or --output")
+    if args.profile and args.check_only and args.output:
+        parser.error("--check-only does not write --output")
+    if args.check_only and not (args.action == "network-check" or args.profile):
+        parser.error("--check-only requires network-check or --profile")
     if args.action == "network-check" and (args.manifest or args.output):
         parser.error("network-check owns its profile and output directory")
     if args.action == "self-test":
@@ -57,6 +67,16 @@ def main() -> None:
             print("Network profile configuration valid; no services or measurements")
         else:
             execute()
+    elif args.profile:
+        from campaign import capture, profile, run_profile
+
+        if args.check_only:
+            profile(args.profile)
+            print("Campaign profile valid; no network, crypto or services")
+        elif args.capture_attempt is not None:
+            capture(args.profile, args.capture_attempt)
+        else:
+            run_profile(args.profile, args.output)
     else:
         if args.manifest is None or args.output is None:
             parser.error("run requires --manifest and --output")

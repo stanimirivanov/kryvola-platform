@@ -29,6 +29,14 @@ def main() -> None:
     run(sys.executable, "tools/workflow_assets.py", "check")
     run(sys.executable, "tools/release_conformance.py", "check")
     run(sys.executable, "tools/benchmark.py", "network-check", "--check-only")
+    run(
+        sys.executable,
+        "tools/benchmark.py",
+        "run",
+        "--profile",
+        "config/benchmarks/fhe-q1.json",
+        "--check-only",
+    )
     if REPO in {"kryvola-fabric", "kryvola-engines"}:
         run("cargo", "fmt", "--all", "--check")
         run("cargo", "clippy", "--locked", "--workspace", "--all-targets", "--", "-D", "warnings")
@@ -36,6 +44,13 @@ def main() -> None:
         os.environ["KRYVOLA_RELEASE_SIGNATURE_TESTS"] = "1"
         run(sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v")
         run(sys.executable, "tools/benchmark.py", "self-test")
+        run(
+            sys.executable,
+            "tools/benchmark.py",
+            "run",
+            "--profile",
+            "config/benchmarks/fhe-q1.json",
+        )
         if REPO in {"kryvola-fabric", "kryvola-engines"}:
             run("cargo", "test", "--locked", "--workspace")
         if REPO == "kryvola-engines":

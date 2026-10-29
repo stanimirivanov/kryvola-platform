@@ -69,3 +69,8 @@ internal owner network and synthetic non-key canary. Full checks run it on the
 same owned stack; `tools/integration.py isolation` provides the standalone gate.
 Linux full runs require a non-root host UID/GID; development IDs are not production
 workload identities. Only public isolation reports are retained.
+
+The [M0-PR34 research campaign harness](docs/campaigns.md) replays pinned numeric
+engine observations with `tools/benchmark.py run --profile config/benchmarks/fhe-q1.json`.
+Full CI validates the captures and existing live gates; fast profile checks
+provision nothing. Research evidence remains inconclusive for production latency.
