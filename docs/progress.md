@@ -99,6 +99,6 @@ Five-component candidate admission and production qualification remain separate;
 the report explicitly records NOT_SUBMITTED and production_ready=false.
 
 Observed locally: actual upstream metadata and package signatures admitted;
-all ten CLI probes rejected; formatting/lint/types and 43 Python tests passed
+all ten CLI probes rejected; formatting/lint/types and 44 Python tests passed
 (five Linux/full-signature checks deferred to CI). Full live pre-PR verification
 and retained evidence are recorded in the PR. No local Docker stack was started.

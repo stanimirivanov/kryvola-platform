@@ -59,8 +59,9 @@ The CLI first admits a valid baseline, then runs ten separate failing probes:
 unsigned package, wrong publisher signature (with updated transport hash to reach
 real verification), changed package, changed schema, sibling source, mutable image,
 control/Temporal payload overflow, production claim and failed upstream evidence.
-Each must exit 1 with the fixed rejection code; parser/import errors or an always
-broken baseline do not count as successful negative controls. Probes work on
+Each must reach its intended guard and exit 1 with its case-specific rejection
+code; setup errors exit 2. Parser/import errors or an always broken baseline do
+not count as successful negative controls. Probes work on
 private temporary copies and never modify admitted artifacts or installed code.
 No OIDC tokens/private signing keys are created by this gate.
 

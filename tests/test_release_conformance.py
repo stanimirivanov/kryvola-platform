@@ -102,6 +102,33 @@ class ConformanceTests(unittest.TestCase):
                 gate.controls()
             load.assert_not_called()
 
+    def test_probe_setup_failure_cannot_count_as_an_intended_rejection(self):
+        spec = gate.importlib.util.spec_from_file_location(
+            "probe_checks", gate.ROOT / "tests/integration/test_release_admission.py"
+        )
+        assert spec is not None and spec.loader is not None
+        module = gate.importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        for code, stderr in (
+            (2, b"RELEASE_CONFORMANCE_ERROR"),
+            (1, b"RELEASE_CONFORMANCE_REJECTED wrong-case"),
+        ):
+            with patch.object(
+                subprocess, "run", return_value=subprocess.CompletedProcess([], code, b"", stderr)
+            ):
+                with self.assertRaises(ValueError):
+                    module.qualify(["schema"], gate.ROOT)
+        with patch.object(
+            subprocess,
+            "run",
+            return_value=subprocess.CompletedProcess(
+                [], 1, b"", b"RELEASE_CONFORMANCE_REJECTED schema"
+            ),
+        ):
+            self.assertEqual(
+                module.qualify(["schema"], gate.ROOT), [{"case": "schema", "exit_code": 1}]
+            )
+
     def test_runtime_image_content_drift_rejects(self):
         reference = "fixture@sha256:" + "a" * 64
         stack = SimpleNamespace(compose=Mock(return_value=SimpleNamespace(stdout=b"container")))

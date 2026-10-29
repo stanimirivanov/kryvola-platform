@@ -17,7 +17,7 @@ def qualify(cases, root):
         if (
             result.returncode != 1
             or result.stdout
-            or result.stderr.strip() != b"RELEASE_CONFORMANCE_REJECTED"
+            or result.stderr.strip() != ("RELEASE_CONFORMANCE_REJECTED " + case).encode()
         ):
             raise ValueError("ADMISSION_NEGATIVE_CONTROL_FAILED")
         results.append({"case": case, "exit_code": result.returncode})

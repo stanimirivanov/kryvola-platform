@@ -13,6 +13,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from zipfile import ZipFile
 
+from jsonschema import ValidationError
+
 from kryvola_platform.inventory import validate_inventory
 
 if __package__:
@@ -36,6 +38,10 @@ CASES = (
     "production",
     "upstream-failure",
 )
+
+
+class ProbeRejected(ValueError):
+    """Only an intended guard failure, after successful mutation setup."""
 
 
 def read(path):
@@ -210,7 +216,10 @@ def probe(case):
         shutil.copytree(workflow_assets.OUTPUT, assets)
         executable = "cosign.exe" if platform.system() == "Windows" else "cosign"
         (root / ".tools").mkdir()
-        os.link(ROOT / ".tools" / executable, root / ".tools" / executable)
+        try:
+            os.link(ROOT / ".tools" / executable, root / ".tools" / executable)
+        except OSError:
+            shutil.copyfile(ROOT / ".tools" / executable, root / ".tools" / executable)
         evidence = root / "spec-evidence.json"
         shutil.copyfile(EVIDENCE, evidence)
         if case == "unsigned":
@@ -233,10 +242,7 @@ def probe(case):
             value["services"]["ray"]["image"] = "rayproject/ray:latest"
             (root / "compose.yaml").write_text(json.dumps(value))
         elif case in {"control-payload", "temporal-payload"}:
-            check_control_size(
-                b"x" * (32769 if case == "temporal-payload" else 65537),
-                temporal=case == "temporal-payload",
-            )
+            pass
         elif case == "production":
             value = read(root / "config/foundation.json")
             value["production_ready"] = True
@@ -245,7 +251,41 @@ def probe(case):
             value = read(evidence)
             value["jobs"]["jobs"][0]["conclusion"] = "failure"
             evidence.write_text(json.dumps(value))
-        admit(root, assets, evidence)
+        rejected = False
+        try:
+            if case in {"control-payload", "temporal-payload"}:
+                check_control_size(
+                    b"x" * (32769 if case == "temporal-payload" else 65537),
+                    temporal=case == "temporal-payload",
+                )
+            else:
+                admit(root, assets, evidence)
+        except Exception as error:
+            codes = {
+                "unsigned": "WORKFLOW_ASSET_FILE",
+                "wrong-signature": "WORKFLOW_PUBLISHER_REJECTED",
+                "asset-drift": "WORKFLOW_ASSET_CHANGED",
+                "sibling-source": "CONFORMANCE_SOURCE_DEPENDENCY",
+                "mutable-image": "UNSAFE_SERVICE_BOUNDARY",
+                "control-payload": "CONTROL_TOO_LARGE",
+                "temporal-payload": "CONTROL_TOO_LARGE",
+                "upstream-failure": "CONFORMANCE_UPSTREAM_CHECK",
+            }
+            rejected = (
+                isinstance(error, ValueError)
+                and case in codes
+                and str(error) == codes[case]
+                or case == "schema"
+                and isinstance(error, ValueError)
+                and str(error).startswith("contracts: modified generated artifact")
+                or case == "production"
+                and isinstance(error, ValidationError)
+                and list(error.path) == ["production_ready"]
+            )
+            if not rejected:
+                raise
+        if rejected:
+            raise ProbeRejected(case)
 
 
 def controls():
@@ -340,6 +380,9 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception:
-        print("RELEASE_CONFORMANCE_REJECTED", file=sys.stderr)
+    except ProbeRejected as error:
+        print("RELEASE_CONFORMANCE_REJECTED " + str(error), file=sys.stderr)
         sys.exit(1)
+    except Exception:
+        print("RELEASE_CONFORMANCE_ERROR", file=sys.stderr)
+        sys.exit(2)
