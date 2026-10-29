@@ -5,6 +5,7 @@ import base64
 import copy
 import json
 import subprocess
+import sys
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -13,6 +14,15 @@ from tools import integration, isolation
 
 
 class IsolationTests(unittest.TestCase):
+    def test_log_output_allowance_is_bounded_and_default_limit_is_preserved(self):
+        command = [sys.executable, "-c", "print('x'*70000)"]
+        with self.assertRaisesRegex(ValueError, "CLI_OUTPUT_LIMIT"):
+            integration.run(command)
+        self.assertEqual(len(integration.run(command, output_limit=131072).stdout.strip()), 70000)
+        for limit in (True, 0, 262145):
+            with self.assertRaisesRegex(ValueError, "CLI_OUTPUT_LIMIT_SETTING"):
+                integration.run(command, output_limit=limit)
+
     def test_shared_probe_parses_on_the_ray_python_version(self):
         code = (isolation.ROOT / "config/isolation/probe.py").read_text()
         ast.parse(code, feature_version=(3, 12))

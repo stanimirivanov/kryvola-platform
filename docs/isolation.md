@@ -41,8 +41,9 @@ is readable, and require owner/Docker paths to be absent. Runtime configuration
 and mounts are inspected for owner material; actual actor UIDs are reported without
 pretending the existing workflow image is non-root.
 
-The gate scans the actual Redpanda record, actual Temporal history and bounded
-owner/compute/broker/workflow logs for raw, hexadecimal, base64 and JSON-escaped
+The gate scans the actual Redpanda record, actual Temporal history and up to 200
+log lines per owner/compute/broker/workflow service (256 KiB maximum each) for raw,
+hexadecimal, base64 and JSON-escaped
 canary material. It does not claim to detect arbitrary encryption, encoding,
 fragmentation or unknown sensitive data. Raw histories, logs, canary bytes and
 canary hashes are never retained/uploaded. Reports contain identities, target-role

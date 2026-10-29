@@ -111,9 +111,11 @@ def configuration(value=None):
     return value
 
 
-def run(args, *, env=None, timeout=30, payload=None):
+def run(args, *, env=None, timeout=30, payload=None, output_limit=65_536):
     # CLI output is spooled, not retained in memory; only bounded diagnostic
     # bytes are accepted. These are trusted fixture commands, not an OS sandbox.
+    if type(output_limit) is not int or not 1 <= output_limit <= 262144:
+        raise ValueError("CLI_OUTPUT_LIMIT_SETTING")
     with tempfile.TemporaryFile() as out, tempfile.TemporaryFile() as err:
         child = subprocess.Popen(
             list(map(str, args)),
@@ -136,8 +138,8 @@ def run(args, *, env=None, timeout=30, payload=None):
             child.wait()
         out.seek(0)
         err.seek(0)
-        stdout, stderr = out.read(65_537), err.read(65_537)
-        if len(stdout) > 65_536 or len(stderr) > 65_536:
+        stdout, stderr = out.read(output_limit + 1), err.read(output_limit + 1)
+        if len(stdout) > output_limit or len(stderr) > output_limit:
             raise ValueError("CLI_OUTPUT_LIMIT")
         return subprocess.CompletedProcess(args, child.returncode, stdout, stderr)
 
@@ -164,7 +166,7 @@ class Stack:
             }
         }
 
-    def compose(self, *args, timeout=30, payload=None, check=True):
+    def compose(self, *args, timeout=30, payload=None, check=True, output_limit=65_536):
         result = run(
             [
                 "docker",
@@ -180,6 +182,7 @@ class Stack:
             env=self.env,
             timeout=timeout,
             payload=payload,
+            output_limit=output_limit,
         )
         if check and result.returncode:
             diagnostic = result.stderr.decode("utf-8", errors="replace")

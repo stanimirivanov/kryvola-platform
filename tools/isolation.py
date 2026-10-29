@@ -199,7 +199,9 @@ def qualify(stack, fake):
     workflow_id = fake["trace"][2]["workflow_id"]
     scan(asyncio.run(history_bytes(addresses["temporal"], workflow_id)), canary)
     for role in ("owner", "ray", "redpanda", "temporal"):
-        logs = stack.compose("logs", "--no-color", "--tail", "200", role).stdout
+        logs = stack.compose(
+            "logs", "--no-color", "--tail", "200", role, output_limit=262144
+        ).stdout
         scan(logs, canary)
     report = {
         "kind": "LOCAL_SYNTHETIC_ISOLATION_ONLY",
