@@ -357,6 +357,11 @@ def execute():
             from fake_workflow import smoke
         fake = smoke(stack)
         report = observe(stack)
+        if __package__:
+            from .isolation import qualify
+        else:
+            from isolation import qualify
+        qualify(stack, fake)
         release_conformance.finish(stack, fake, admission)
         return report
     finally:

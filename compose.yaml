@@ -1,5 +1,14 @@
 {
   "services": {
+    "owner": {
+      "image": "python@sha256:7bf6c3111fe094f8ee1a1cbcdc63c4cfb345b0e3df42d5aa9a90b3b4b022ab6d",
+      "platform": "linux/amd64", "networks": ["owner"], "mem_limit": "64m", "pids_limit": 32,
+      "user": "${FIXTURE_UID:?fixture runner required}:${FIXTURE_GID:?fixture runner required}",
+      "read_only": true, "cap_drop": ["ALL"], "security_opt": ["no-new-privileges:true"],
+      "environment": {"PYTHONDONTWRITEBYTECODE": "1"},
+      "command": ["python", "/fixture/owner.py"],
+      "volumes": ["./config/isolation/owner.py:/fixture/owner.py:ro", {"type": "bind", "source": "${FIXTURE_ROOT:?fixture runner required}/owner-canary", "target": "/owner/fixture-key", "read_only": true}]
+    },
     "postgres": {
       "image": "postgres@sha256:0b81cec82228160abfa753aeaad0609b709eb26eeb950f2e404ad2326e1cc370",
       "platform": "linux/amd64", "networks": ["control"], "mem_limit": "512m",
@@ -51,7 +60,7 @@
     "ray": {
       "image": "rayproject/ray@sha256:e93e502244bf8c0ecf8c633099f7819d7c973d76eded8e32617e1fb66725da02",
       "platform": "linux/amd64", "networks": ["compute"], "mem_limit": "1536m", "shm_size": "256m",
-      "environment": {"RAY_USAGE_STATS_ENABLED": "0"},
+      "user": "1000:1000", "environment": {"RAY_USAGE_STATS_ENABLED": "0"},
       "entrypoint": ["ray"], "command": ["start", "--head", "--port=6379", "--include-dashboard=false", "--num-cpus=1", "--object-store-memory=100000000", "--disable-usage-stats", "--block"]
     },
     "transfer": {
@@ -67,6 +76,6 @@
       "platform": "linux/amd64", "networks": ["data"], "mem_limit": "64m"
     }
   },
-  "networks": {"control": {"internal": true}, "data": {"internal": true}, "compute": {"internal": true}},
+  "networks": {"control": {"internal": true}, "data": {"internal": true}, "compute": {"internal": true}, "owner": {"internal": true}},
   "volumes": {"postgres": {}, "seaweed": {}, "redpanda": {}}
 }
