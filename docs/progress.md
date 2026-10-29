@@ -87,3 +87,18 @@ Observed locally: both publishers succeeded; actual keyless manifest verificatio
 asset/source/spec pins, formatting/lint/types and 38 Python tests passed (five
 Linux/full-signature checks deferred to CI). Full service traversal and final
 pre-PR CI evidence are recorded in the PR. No local services were started.
+
+## M0-PR32 — experimental release-set conformance
+
+Issue #13 adds the explicit [conformance gate](release-conformance.md): exact
+upstream spec attempt/job evidence, admitted installed package bytes/UV pins,
+ten separate CLI rejection probes, actual native fake/replay checks and runtime
+image content identities. Full checks share one owned stack. The workflow moves
+to integration.yml with the existing foundation/verify identity and triggers.
+Five-component candidate admission and production qualification remain separate;
+the report explicitly records NOT_SUBMITTED and production_ready=false.
+
+Observed locally: actual upstream metadata and package signatures admitted;
+all ten CLI probes rejected; formatting/lint/types and 43 Python tests passed
+(five Linux/full-signature checks deferred to CI). Full live pre-PR verification
+and retained evidence are recorded in the PR. No local Docker stack was started.

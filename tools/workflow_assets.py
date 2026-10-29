@@ -29,8 +29,8 @@ def digest(path, maximum=128 << 20):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def pins():
-    value = json.loads(LOCK.read_bytes())
+def pins(lock=None):
+    value = json.loads((lock or LOCK).read_bytes())
     if set(value) != {"fabric", "engines"}:
         raise ValueError("WORKFLOW_COMPONENTS")
     for role, component in value.items():
@@ -59,13 +59,14 @@ def pins():
     return value
 
 
-def verify():
-    locked = pins()
-    executable = ROOT / ".tools" / ("cosign.exe" if platform.system() == "Windows" else "cosign")
+def verify(root=None, output=None, lock=None):
+    root, output = root or ROOT, output or OUTPUT
+    locked = pins(lock) if lock is not None else pins()
+    executable = root / ".tools" / ("cosign.exe" if platform.system() == "Windows" else "cosign")
     if digest(executable, 256 << 20) != COSIGN_DIGESTS[platform.system()]:
         raise ValueError("WORKFLOW_VERIFIER_PIN")
     for role, component in locked.items():
-        folder = OUTPUT / role
+        folder = output / role
         for name, expected in component["assets"].items():
             if digest(folder / name) != expected:
                 raise ValueError("WORKFLOW_ASSET_CHANGED")
@@ -108,7 +109,7 @@ def verify():
             deps = json.loads((folder / "provenance.json").read_bytes())["predicate"][
                 "buildDefinition"
             ]["resolvedDependencies"]
-            expected_spec = json.loads((ROOT / "spec.lock.json").read_bytes())["manifest_sha256"]
+            expected_spec = json.loads((root / "spec.lock.json").read_bytes())["manifest_sha256"]
             if {"uri": "urn:kryvola:spec-bundle", "digest": {"sha256": expected_spec}} not in deps:
                 raise ValueError("WORKFLOW_SPEC_MISMATCH")
         elif (

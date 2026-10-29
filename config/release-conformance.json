@@ -1,0 +1,11 @@
+{
+  "repository": "stanimirivanov/kryvola-spec",
+  "source": "1a5b57a590487ba116913050af8041f5e5f1fb52",
+  "run_id": 40484284554,
+  "attempt": 1,
+  "jobs": {
+    "verify": "Run pnpm check",
+    "native": "Run pnpm native:check",
+    "canonical": "Run pnpm check:canonical"
+  }
+}

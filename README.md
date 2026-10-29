@@ -58,3 +58,8 @@ Install Cosign, run `uv run --locked python tools/workflow_assets.py install`, t
 `uv sync --locked --extra conformance` before the full gate. Full checks use
 `uv run --locked --extra conformance python tools/verify.py full`; fast checks
 still start no services. The standalone traversal is `tools/integration.py smoke`.
+
+The [M0-PR32 conformance gate](docs/release-conformance.md) additionally needs
+`uv run --locked --extra conformance python tools/release_conformance.py fetch`
+after setup. Full checks now finish with `tools/integration.py ci`, which runs
+admission/negative controls and the existing live checks in one owned stack.

@@ -75,14 +75,21 @@ def dependency_errors(root: Path, repo: str) -> list[str]:
     pyproject = root / "pyproject.toml"
     data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
     forbidden = set() if repo == "kryvola-platform" else IMPLEMENTATIONS - {repo.replace("-", "_")}
-    for package in data.get("project", {}).get("dependencies", []):
+    project = data.get("project", {})
+    packages = list(project.get("dependencies", []))
+    for group in project.get("optional-dependencies", {}).values():
+        packages.extend(group)
+    for package in packages:
         normalized = re.split(r"[\s<>=!~;\[@]", package, maxsplit=1)[0]
         if is_foreign(normalized, forbidden) or re.search(
             r"@\s*(?:file:|\.\.?[/\\])", package, re.IGNORECASE
         ):
             errors.append(f"pyproject.toml: forbidden implementation/local dependency {package}")
     for name, source in data.get("tool", {}).get("uv", {}).get("sources", {}).items():
-        if isinstance(source, dict) and "path" in source:
+        if any(
+            isinstance(item, dict) and {"path", "git", "workspace"}.intersection(item)
+            for item in (source if isinstance(source, list) else [source])
+        ):
             errors.append(
                 f"pyproject.toml: local source dependency {name} is not a release artifact"
             )
