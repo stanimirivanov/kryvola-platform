@@ -14,9 +14,9 @@ uv run --locked python tools/verify.py full
 uv run --locked python -m kryvola_platform config/foundation.json
 ```
 
-`fast` runs formatting/lint/type/provenance/dependency checks. `full` adds isolated positive/negative controls, contract tests and a wheel build. Missing tools or files fail the command. Apply Python formatting with `uv run --locked ruff format .` and lint fixes with `uv run --locked ruff check --fix .`; rerun affected checks after changes.
+`fast` runs formatting/lint/type/provenance/dependency and offline fixture checks. `full` adds isolated positive/negative controls, contract tests, a wheel build and the [local Docker service qualification](docs/local-services.md). Missing tools or files fail the command. Apply Python formatting with `uv run --locked ruff format .` and lint fixes with `uv run --locked ruff check --fix .`; rerun affected checks after changes.
 
-No service credentials or local databases are required for this scope. `spec.lock.json` pins immutable generated spec artifacts; a sibling checkout is unnecessary. Generated structural types are not native decoders or authorization. [Architecture and enforcement](docs/architecture.md), [progress](docs/progress.md), and the source references below describe limits.
+Fast checks need no service credentials or databases; full checks create isolated local fixtures with fresh test credentials and tear them down. `spec.lock.json` pins immutable generated spec artifacts; a sibling checkout is unnecessary. Generated structural types are not native decoders or authorization. [Architecture and enforcement](docs/architecture.md), [progress](docs/progress.md), and the source references below describe limits.
 
 ## M0 release-set inputs
 

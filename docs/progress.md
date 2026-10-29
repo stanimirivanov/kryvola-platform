@@ -1,5 +1,16 @@
 # Foundation progress
 
+## M0-PR29 — isolated local service fixtures
+
+Issue #7 adds digest-pinned PostgreSQL, SeaweedFS, Redpanda, Temporal, Ray and
+Toxiproxy fixtures, separate internal networks, fresh SQL/S3 identities and no
+published ports or compute mounts. Full checks require real service operations,
+S3 version/range/conditional/race behavior, container recreation, restarts and
+scoped cleanup. Offline tests cover isolation, lifecycle, output/deadline and
+credential-redaction controls. Actual integration evidence is recorded in the PR
+after branch CI passes; configuration alone is not qualification. No production
+profile, crypto release, workflow behavior or network benchmark is enabled.
+
 ## M0-PR25 — reproducible local observations
 
 Issue: #5. Adds the bounded Linux subprocess benchmark runner, spec-validated

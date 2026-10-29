@@ -1,0 +1,64 @@
+{
+  "services": {
+    "postgres": {
+      "image": "postgres@sha256:0b81cec82228160abfa753aeaad0609b709eb26eeb950f2e404ad2326e1cc370",
+      "platform": "linux/amd64", "networks": ["control"], "mem_limit": "512m",
+      "environment": {"POSTGRES_USER": "temporal_fixture", "POSTGRES_PASSWORD": "${PG_PASSWORD:?fixture runner required}"},
+      "volumes": ["postgres:/var/lib/postgresql/data"],
+      "healthcheck": {"test": ["CMD", "pg_isready", "-U", "temporal_fixture"], "interval": "3s", "timeout": "3s", "retries": 60}
+    },
+    "schema": {
+      "image": "temporalio/admin-tools@sha256:4fdaf9122f8beb448c823976232f6616a8cd94687f6984eeaf25c2b1457d5fed",
+      "platform": "linux/amd64", "networks": ["control"], "mem_limit": "256m",
+      "depends_on": {"postgres": {"condition": "service_healthy"}},
+      "environment": {"SQL_PASSWORD": "${PG_PASSWORD:?fixture runner required}"},
+      "entrypoint": ["/bin/sh", "/fixture/schema.sh"],
+      "volumes": ["./config/local-services/schema.sh:/fixture/schema.sh:ro"]
+    },
+    "temporal": {
+      "image": "temporalio/server@sha256:2695f2564ec51aa84232bf3fa59b31e2cce99bec437a64f5bc487cbe21b2de0e",
+      "platform": "linux/amd64", "networks": ["control"], "mem_limit": "768m",
+      "depends_on": {"schema": {"condition": "service_completed_successfully"}},
+      "environment": {"DB": "postgres12", "DB_PORT": "5432", "POSTGRES_USER": "temporal_fixture", "POSTGRES_PWD": "${PG_PASSWORD:?fixture runner required}", "POSTGRES_SEEDS": "postgres", "BIND_ON_IP": "0.0.0.0", "DYNAMIC_CONFIG_FILE_PATH": "/etc/temporal/fixture.yaml"},
+      "volumes": ["./config/local-services/dynamicconfig.yaml:/etc/temporal/fixture.yaml:ro"],
+      "healthcheck": {"test": ["CMD", "nc", "-z", "localhost", "7233"], "interval": "3s", "timeout": "3s", "retries": 60}
+    },
+    "temporal-cli": {
+      "image": "temporalio/admin-tools@sha256:4fdaf9122f8beb448c823976232f6616a8cd94687f6984eeaf25c2b1457d5fed",
+      "platform": "linux/amd64", "networks": ["control"], "mem_limit": "192m",
+      "entrypoint": ["sleep", "infinity"], "depends_on": {"temporal": {"condition": "service_healthy"}}
+    },
+    "seaweed": {
+      "image": "chrislusf/seaweedfs@sha256:3a522c379599e163433a636e75022630848b63a74f08ea37bf06f8d776e9a707",
+      "platform": "linux/amd64", "networks": ["data"], "mem_limit": "1g",
+      "entrypoint": ["/bin/sh", "/fixture/seaweed.sh"],
+      "command": ["server", "-dir=/data", "-ip=seaweed", "-ip.bind=0.0.0.0", "-filer", "-s3", "-s3.config=/data/fixture-s3.json", "-volume.max=2", "-master.volumeSizeLimitMB=32"],
+      "volumes": ["seaweed:/data", {"type": "bind", "source": "${FIXTURE_ROOT:?fixture runner required}/s3.json", "target": "/fixture/s3.json", "read_only": true}, "./config/local-services/seaweed.sh:/fixture/seaweed.sh:ro"]
+    },
+    "s3-client": {
+      "image": "amazon/aws-cli@sha256:0c240be22c3ce600499ec36429bbdd758c86b10ac3e34f2c6e17698816b5f04a",
+      "platform": "linux/amd64", "networks": ["data"], "mem_limit": "192m",
+      "entrypoint": ["sleep", "infinity"],
+      "environment": {"AWS_ACCESS_KEY_ID": "${S3_ACCESS:?fixture runner required}", "AWS_SECRET_ACCESS_KEY": "${S3_SECRET:?fixture runner required}", "AWS_DEFAULT_REGION": "us-east-1", "AWS_EC2_METADATA_DISABLED": "true", "AWS_PAGER": "", "AWS_REQUEST_CHECKSUM_CALCULATION": "when_required", "AWS_RESPONSE_CHECKSUM_VALIDATION": "when_required"},
+      "volumes": [{"type": "bind", "source": "${FIXTURE_ROOT:?fixture runner required}/data", "target": "/data"}]
+    },
+    "redpanda": {
+      "image": "docker.redpanda.com/redpandadata/redpanda@sha256:a9dffb84f388a7a2d4ab1aaa541cd0b9a484f0f5c9b72cb54c551953352769ec",
+      "platform": "linux/amd64", "networks": ["data"], "mem_limit": "1g",
+      "command": ["redpanda", "start", "--mode", "dev-container", "--smp", "1", "--memory", "512M", "--reserve-memory", "0M", "--kafka-addr", "0.0.0.0:9092", "--advertise-kafka-addr", "redpanda:9092", "--rpc-addr", "0.0.0.0:33145", "--advertise-rpc-addr", "redpanda:33145"],
+      "volumes": ["redpanda:/var/lib/redpanda/data"]
+    },
+    "ray": {
+      "image": "rayproject/ray@sha256:e93e502244bf8c0ecf8c633099f7819d7c973d76eded8e32617e1fb66725da02",
+      "platform": "linux/amd64", "networks": ["compute"], "mem_limit": "1536m", "shm_size": "256m",
+      "environment": {"RAY_USAGE_STATS_ENABLED": "0"},
+      "entrypoint": ["ray"], "command": ["start", "--head", "--port=6379", "--include-dashboard=false", "--num-cpus=1", "--object-store-memory=100000000", "--disable-usage-stats", "--block"]
+    },
+    "toxiproxy": {
+      "image": "ghcr.io/shopify/toxiproxy@sha256:9941f0357759e6c9bfe0ad45e20c415100505113da0f5c436cfd0a4d27579fdc",
+      "platform": "linux/amd64", "networks": ["data"], "mem_limit": "64m"
+    }
+  },
+  "networks": {"control": {"internal": true}, "data": {"internal": true}, "compute": {"internal": true}},
+  "volumes": {"postgres": {}, "seaweed": {}, "redpanda": {}}
+}
