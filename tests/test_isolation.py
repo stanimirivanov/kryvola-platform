@@ -1,5 +1,6 @@
 """Offline leakage, denial-evidence and configuration controls; no services started."""
 
+import ast
 import base64
 import copy
 import json
@@ -12,6 +13,10 @@ from tools import integration, isolation
 
 
 class IsolationTests(unittest.TestCase):
+    def test_shared_probe_parses_on_the_ray_python_version(self):
+        code = (isolation.ROOT / "config/isolation/probe.py").read_text()
+        ast.parse(code, feature_version=(3, 12))
+
     def test_probe_timeout_removes_only_its_owned_helper(self):
         stack = SimpleNamespace(project="kryvola-m0-0123456789ab")
         with patch.object(

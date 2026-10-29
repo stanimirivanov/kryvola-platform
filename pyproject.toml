@@ -29,6 +29,9 @@ extend-exclude = ["**/_spec/**", "contracts", "build", "target", "dist"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
+[tool.ruff.per-file-target-version]
+"config/isolation/probe.py" = "py312"
+
 [tool.ty.environment]
 python-version = "3.14"
 

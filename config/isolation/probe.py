@@ -21,7 +21,7 @@ def main():
         try:
             with socket.create_connection((target["host"], target["port"]), timeout=0.5):
                 pass
-        except TimeoutError, ConnectionRefusedError, PermissionError:
+        except (TimeoutError, ConnectionRefusedError, PermissionError):
             denied = True
         except OSError as error:
             if error.errno not in {101, 113}:  # Linux ENETUNREACH/EHOSTUNREACH
