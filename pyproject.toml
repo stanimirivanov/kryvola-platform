@@ -6,12 +6,20 @@ requires-python = ">=3.14,<3.15"
 license = "Apache-2.0"
 dependencies = ["jsonschema==4.26.0"]
 
+[project.optional-dependencies]
+conformance = [
+    "kryvola-fabric[conformance]",
+]
+
 [dependency-groups]
 dev = ["ruff==0.17.2", "ty==0.0.91", "hatchling==1.32.4"]
 
 [tool.uv]
 required-version = "==0.12.5"
 package = true
+
+[tool.uv.sources]
+kryvola-fabric = { url = "https://github.com/stanimirivanov/kryvola-fabric/releases/download/experimental-f02281ffa78decb6acd032c102359bf758f92a3a/kryvola_fabric-0.1.0.dev0%2Bgf02281ffa78decb6acd032c102359bf758f92a3a-py3-none-any.whl" }
 
 [tool.ruff]
 target-version = "py314"

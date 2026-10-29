@@ -346,6 +346,11 @@ def execute():
     stack = integration.Stack("kryvola-m0-" + secrets.token_hex(6))
     try:
         stack.up()
+        if __package__:
+            from .fake_workflow import smoke
+        else:
+            from fake_workflow import smoke
+        smoke(stack)
         return observe(stack)
     finally:
         if stack.claimed and integration.ACTIVE.exists():

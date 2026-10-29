@@ -26,6 +26,7 @@ def main() -> None:
     run("ty", "check")
     run(sys.executable, "tools/architecture.py")
     run(sys.executable, "tools/integration.py", "check")
+    run(sys.executable, "tools/workflow_assets.py", "check")
     run(sys.executable, "tools/benchmark.py", "network-check", "--check-only")
     if REPO in {"kryvola-fabric", "kryvola-engines"}:
         run("cargo", "fmt", "--all", "--check")

@@ -111,6 +111,7 @@ class NetworkTests(unittest.TestCase):
             stack.claimed = True
             with (
                 patch.object(network.integration.ACTIVE.__class__, "exists", return_value=True),
+                patch("tools.fake_workflow.smoke"),
                 patch.object(network, "observe", side_effect=ValueError("TEST_FAILURE")),
             ):
                 with self.assertRaisesRegex(ValueError, "TEST_FAILURE"):
