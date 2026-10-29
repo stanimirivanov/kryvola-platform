@@ -63,3 +63,9 @@ The [M0-PR32 conformance gate](docs/release-conformance.md) additionally needs
 `uv run --locked --extra conformance python tools/release_conformance.py fetch`
 after setup. Full checks now finish with `tools/integration.py ci`, which runs
 admission/negative controls and the existing live checks in one owned stack.
+
+M0-PR33 adds the [local isolation gate](docs/isolation.md), including a fourth
+internal owner network and synthetic non-key canary. Full checks run it on the
+same owned stack; `tools/integration.py isolation` provides the standalone gate.
+Linux full runs require a non-root host UID/GID; development IDs are not production
+workload identities. Only public isolation reports are retained.

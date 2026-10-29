@@ -16,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 ACTIVE = ROOT / "build/integration/active.json"
 NETWORKS = {
+    "owner": "owner",
     "postgres": "control",
     "schema": "control",
     "temporal": "control",
@@ -28,6 +29,15 @@ NETWORKS = {
     "transfer": "data",
 }
 MOUNTS = {
+    "owner": [
+        "./config/isolation/owner.py:/fixture/owner.py:ro",
+        {
+            "type": "bind",
+            "source": "${FIXTURE_ROOT:?fixture runner required}/owner-canary",
+            "target": "/owner/fixture-key",
+            "read_only": True,
+        },
+    ],
     "transfer": ["./config/network-profiles/worker.py:/fixture/worker.py:ro"],
     "postgres": ["postgres:/var/lib/postgresql/data"],
     "schema": ["./config/local-services/schema.sh:/fixture/schema.sh:ro"],
@@ -57,7 +67,7 @@ def configuration(value=None):
     value = value if value is not None else json.loads((ROOT / "compose.yaml").read_text())
     if set(value) != {"services", "networks", "volumes"} or set(value["services"]) != set(NETWORKS):
         raise ValueError("UNEXPECTED_COMPOSE_COMPONENT")
-    if value["networks"] != {name: {"internal": True} for name in {"control", "compute", "data"}}:
+    if value["networks"] != {name: {"internal": True} for name in set(NETWORKS.values())}:
         raise ValueError("EXTERNAL_OR_BRIDGED_NETWORK")
     for name, service in value["services"].items():
         if (
@@ -79,6 +89,18 @@ def configuration(value=None):
             raise ValueError("UNSAFE_SERVICE_BOUNDARY")
     if set(value["services"]["ray"]["environment"]) != {"RAY_USAGE_STATS_ENABLED"}:
         raise ValueError("COMPUTE_CREDENTIAL_INJECTION")
+    if value["services"]["ray"].get("user") != "1000:1000":
+        raise ValueError("COMPUTE_IDENTITY_DRIFT")
+    owner = value["services"]["owner"]
+    if (
+        owner.get("user")
+        != "${FIXTURE_UID:?fixture runner required}:${FIXTURE_GID:?fixture runner required}"
+        or owner.get("read_only") is not True
+        or owner.get("cap_drop") != ["ALL"]
+        or owner.get("security_opt") != ["no-new-privileges:true"]
+        or owner.get("environment") != {"PYTHONDONTWRITEBYTECODE": "1"}
+    ):
+        raise ValueError("OWNER_SANDBOX_DRIFT")
     transfer = value["services"]["transfer"]
     if (
         transfer.get("user") != "65532:65532"
@@ -89,9 +111,11 @@ def configuration(value=None):
     return value
 
 
-def run(args, *, env=None, timeout=30, payload=None):
+def run(args, *, env=None, timeout=30, payload=None, output_limit=65_536):
     # CLI output is spooled, not retained in memory; only bounded diagnostic
     # bytes are accepted. These are trusted fixture commands, not an OS sandbox.
+    if type(output_limit) is not int or not 1 <= output_limit <= 262144:
+        raise ValueError("CLI_OUTPUT_LIMIT_SETTING")
     with tempfile.TemporaryFile() as out, tempfile.TemporaryFile() as err:
         child = subprocess.Popen(
             list(map(str, args)),
@@ -114,8 +138,8 @@ def run(args, *, env=None, timeout=30, payload=None):
             child.wait()
         out.seek(0)
         err.seek(0)
-        stdout, stderr = out.read(65_537), err.read(65_537)
-        if len(stdout) > 65_536 or len(stderr) > 65_536:
+        stdout, stderr = out.read(output_limit + 1), err.read(output_limit + 1)
+        if len(stdout) > output_limit or len(stderr) > output_limit:
             raise ValueError("CLI_OUTPUT_LIMIT")
         return subprocess.CompletedProcess(args, child.returncode, stdout, stderr)
 
@@ -131,10 +155,18 @@ class Stack:
         self.env = {
             k: v
             for k, v in os.environ.items()
-            if k not in {"PG_PASSWORD", "S3_ACCESS", "S3_SECRET", "FIXTURE_ROOT"}
+            if k
+            not in {
+                "PG_PASSWORD",
+                "S3_ACCESS",
+                "S3_SECRET",
+                "FIXTURE_ROOT",
+                "FIXTURE_UID",
+                "FIXTURE_GID",
+            }
         }
 
-    def compose(self, *args, timeout=30, payload=None, check=True):
+    def compose(self, *args, timeout=30, payload=None, check=True, output_limit=65_536):
         result = run(
             [
                 "docker",
@@ -150,6 +182,7 @@ class Stack:
             env=self.env,
             timeout=timeout,
             payload=payload,
+            output_limit=output_limit,
         )
         if check and result.returncode:
             diagnostic = result.stderr.decode("utf-8", errors="replace")
@@ -207,8 +240,17 @@ class Stack:
             "S3_ACCESS": access,
             "S3_SECRET": secret,
             "FIXTURE_ROOT": self.folder.as_posix(),
+            "FIXTURE_UID": str(os.getuid() if sys.platform == "linux" else 1000),
+            "FIXTURE_GID": str(os.getgid() if sys.platform == "linux" else 1000),
         }
-        self.redactions = [settings[k] for k in ("PG_PASSWORD", "S3_ACCESS", "S3_SECRET")]
+        if int(settings["FIXTURE_UID"]) <= 0 or int(settings["FIXTURE_GID"]) <= 0:
+            raise ValueError("NONROOT_FIXTURE_HOST_REQUIRED")
+        canary = "PUBLIC_ISOLATION_CANARY_NOT_A_KEY_" + secrets.token_hex(24)
+        (self.folder / "owner-canary").write_text(canary)
+        (self.folder / "owner-canary").chmod(0o400)
+        self.redactions = [settings[k] for k in ("PG_PASSWORD", "S3_ACCESS", "S3_SECRET")] + [
+            canary
+        ]
         (self.folder / "fixture.env").write_text(
             "".join(f"{k}={json.dumps(v)}\n" for k, v in settings.items())
         )
@@ -243,7 +285,7 @@ class Stack:
         networks.check_returncode()
         details = run(["docker", "network", "inspect", *networks.stdout.decode().split()])
         details.check_returncode()
-        if len(json.loads(details.stdout)) != 3 or not all(
+        if len(json.loads(details.stdout)) != len(set(NETWORKS.values())) or not all(
             n["Internal"] for n in json.loads(details.stdout)
         ):
             raise ValueError("NONINTERNAL_RUNTIME_NETWORK")
@@ -288,9 +330,15 @@ class Stack:
                     print("FIXTURE_DIAGNOSTIC_UNAVAILABLE", file=sys.stderr)
                 self.down()
             elif self.created:
-                for name in ("fixture.env", "s3.json"):
-                    (self.folder / name).unlink(missing_ok=True)
+                self.remove_credentials()
             raise
+
+    def remove_credentials(self):
+        for name in ("fixture.env", "s3.json", "owner-canary"):
+            path = self.folder / name
+            if path.exists():
+                path.chmod(0o600)
+                path.unlink()
 
     def down(self):
         self.compose("down", "--volumes", "--remove-orphans", timeout=120)
@@ -310,21 +358,20 @@ class Stack:
                 raise ValueError("INCOMPLETE_CLEANUP_" + kind.upper())
         ACTIVE.unlink()
         # Remove only generated credential files; retain public observations.
-        for name in ("fixture.env", "s3.json"):
-            (self.folder / name).unlink()
+        self.remove_credentials()
         print("LOCAL_FIXTURES_REMOVED")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["check", "up", "down", "smoke", "ci"])
+    parser.add_argument("command", choices=["check", "up", "down", "smoke", "ci", "isolation"])
     args = parser.parse_args()
     if args.command == "check":
         configuration()
         print("Fixture configuration valid; no services started")
     elif args.command == "up":
         Stack("kryvola-m0-" + secrets.token_hex(6)).up()
-    elif args.command == "smoke":
+    elif args.command in {"smoke", "isolation"}:
         if __package__:
             from .fake_workflow import smoke
         else:
@@ -332,7 +379,13 @@ def main():
         stack = Stack("kryvola-m0-" + secrets.token_hex(6))
         try:
             stack.up()
-            smoke(stack)
+            fake = smoke(stack)
+            if args.command == "isolation":
+                if __package__:
+                    from .isolation import qualify
+                else:
+                    from isolation import qualify
+                qualify(stack, fake)
         finally:
             if stack.claimed and ACTIVE.exists():
                 stack.down()

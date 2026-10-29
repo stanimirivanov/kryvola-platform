@@ -102,3 +102,17 @@ Observed locally: actual upstream metadata and package signatures admitted;
 all ten CLI probes rejected; formatting/lint/types and 44 Python tests passed
 (five Linux/full-signature checks deferred to CI). Full live pre-PR verification
 and retained evidence are recorded in the PR. No local Docker stack was started.
+
+## M0-PR33 — local owner/compute separation
+
+Issue #15 adds a non-root owner fixture on a fourth internal network, a generated
+synthetic non-key canary mounted only there, positive-controlled raw-IP denial
+probes, actual actor file/configuration checks and raw/encoded leakage scans over
+actual broker records, Temporal history and service logs. Normal/failure teardown
+removes the canary and namespace helpers. [Scope and gates](isolation.md) explicitly
+limit these development identities and tests; no actual owner key or production
+security qualification is introduced.
+
+Observed locally: formatting/lint/types and offline controls passed. The full
+pre-PR CI result and retained isolation report are recorded in the PR. No local
+Docker services or heavy native builds were started.

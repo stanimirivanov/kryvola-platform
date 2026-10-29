@@ -83,11 +83,14 @@ class IntegrationTests(unittest.TestCase):
                 self.assertTrue(active.is_file())
                 self.assertNotIn("PG_PASSWORD", stack.env)
                 self.assertNotIn("ambient-value", (stack.folder / "fixture.env").read_text())
-                self.assertEqual(len(stack.redactions), 3)
+                self.assertEqual(len(stack.redactions), 4)
+                self.assertTrue((stack.folder / "owner-canary").is_file())
+                self.assertNotIn(stack.redactions[-1], (stack.folder / "fixture.env").read_text())
                 stack.down()
                 self.assertFalse(active.exists())
                 self.assertFalse((stack.folder / "s3.json").exists())
                 self.assertFalse((stack.folder / "fixture.env").exists())
+                self.assertFalse((stack.folder / "owner-canary").exists())
 
     def test_failure_attempts_cleanup_and_redacts_fixture_tokens(self):
         stack = integration.Stack("kryvola-m0-0123456789ab")
