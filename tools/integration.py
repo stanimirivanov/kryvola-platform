@@ -39,6 +39,7 @@ MOUNTS = {
             "target": "/fixture/s3.json",
             "read_only": True,
         },
+        "./config/local-services/seaweed.sh:/fixture/seaweed.sh:ro",
     ],
     "s3-client": [
         {
@@ -256,6 +257,26 @@ class Stack:
             print("LOCAL_FIXTURES_QUALIFIED; no production profile enabled")
         except BaseException:
             if self.claimed:
+                try:
+                    raw = self.compose(
+                        "ps", "--all", "--format", "json", check=False
+                    ).stdout.strip()
+                    states = (
+                        json.loads(raw)
+                        if raw.startswith(b"[")
+                        else [json.loads(line) for line in raw.splitlines()]
+                    )
+                    for state in states:
+                        if state.get("ExitCode", 0):
+                            result = self.compose(
+                                "logs", "--no-color", "--tail", "20", state["Service"], check=False
+                            )
+                            text = result.stdout.decode("utf-8", errors="replace")
+                            for token in self.redactions:
+                                text = text.replace(token, "[REDACTED]")
+                            print("FAILED_FIXTURE_LOG=" + text[:4096], file=sys.stderr)
+                except Exception:
+                    print("FIXTURE_DIAGNOSTIC_UNAVAILABLE", file=sys.stderr)
                 self.down()
             elif self.created:
                 for name in ("fixture.env", "s3.json"):

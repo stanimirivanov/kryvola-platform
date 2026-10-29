@@ -31,8 +31,9 @@
     "seaweed": {
       "image": "chrislusf/seaweedfs@sha256:3a522c379599e163433a636e75022630848b63a74f08ea37bf06f8d776e9a707",
       "platform": "linux/amd64", "networks": ["data"], "mem_limit": "1g",
-      "command": ["server", "-dir=/data", "-ip=seaweed", "-ip.bind=0.0.0.0", "-filer", "-s3", "-s3.config=/fixture/s3.json", "-volume.max=2", "-master.volumeSizeLimitMB=32"],
-      "volumes": ["seaweed:/data", {"type": "bind", "source": "${FIXTURE_ROOT:?fixture runner required}/s3.json", "target": "/fixture/s3.json", "read_only": true}]
+      "entrypoint": ["/bin/sh", "/fixture/seaweed.sh"],
+      "command": ["server", "-dir=/data", "-ip=seaweed", "-ip.bind=0.0.0.0", "-filer", "-s3", "-s3.config=/data/fixture-s3.json", "-volume.max=2", "-master.volumeSizeLimitMB=32"],
+      "volumes": ["seaweed:/data", {"type": "bind", "source": "${FIXTURE_ROOT:?fixture runner required}/s3.json", "target": "/fixture/s3.json", "read_only": true}, "./config/local-services/seaweed.sh:/fixture/seaweed.sh:ro"]
     },
     "s3-client": {
       "image": "amazon/aws-cli@sha256:0c240be22c3ce600499ec36429bbdd758c86b10ac3e34f2c6e17698816b5f04a",

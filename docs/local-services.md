@@ -43,6 +43,8 @@ networks are distinct internal bridges. No host port is published, including Ray
 management/client/dashboard ports. Ray has no mounts or credential environment.
 SQL and S3 use distinct fixture identities with newly generated credentials under
 ignored `build/integration`; only S3 IAM configuration is mounted into its server.
+The SeaweedFS bootstrap copies that private file to its volume as UID 1000/mode
+0600 before the upstream entrypoint drops privileges; the host file stays 0600.
 The S3 client mounts public test payloads only. There is no Docker-socket, owner
 key, cloud credential or user-home mount. Runtime inspection verifies port and
 network boundaries. This is trusted-host fixture isolation, **not mTLS/authz or
