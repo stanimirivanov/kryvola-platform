@@ -1,5 +1,11 @@
 # Architecture and harness
 
+M0-PR29 extends full checks with [isolated local fixtures](local-services.md).
+Fast checks remain offline and provision nothing. The full harness starts and
+cleans up Docker services and fresh fixture-only credentials; it provisions no
+cloud/production service or owner key. Earlier foundation-only limits below do
+not imply that full checks are service-free after this extension.
+
 Source: design v2 sections 4.3, 5, 6, 7 and 13; plan v2 M0; [schema amendment](https://github.com/stanimirivanov/kryvola-spec/blob/647986b9ba9cb2c6d3b853046272e3869b6fea5e/docs/adr/0001-schema-authoring.md).
 
 Platform composes released artifacts from the other repositories; it does not own their cryptographic implementations. Unqualified profiles remain disabled. Kubernetes/Ray/broker identities cannot hold private decryption keys. No cloud, service or secret is provisioned by foundation checks.

@@ -25,6 +25,7 @@ def main() -> None:
     run("ruff", "check", ".")
     run("ty", "check")
     run(sys.executable, "tools/architecture.py")
+    run(sys.executable, "tools/integration.py", "check")
     if REPO in {"kryvola-fabric", "kryvola-engines"}:
         run("cargo", "fmt", "--all", "--check")
         run("cargo", "clippy", "--locked", "--workspace", "--all-targets", "--", "-D", "warnings")
@@ -40,6 +41,8 @@ def main() -> None:
             run("ctest", "--test-dir", "build/cpp", "--output-on-failure")
         else:
             run("uv", "build", "--no-build-isolation", "--wheel")
+        run(sys.executable, "tools/integration.py", "up")
+        run(sys.executable, "tools/integration.py", "down")
 
 
 if __name__ == "__main__":
