@@ -1,5 +1,16 @@
 # Foundation progress
 
+## M0-PR26 — shaped transfer/resource observations
+
+Issue #9 adds pinned synthetic LAN/WAN profiles, a bounded public HTTP fixture,
+actual Toxiproxy delay/bandwidth/disconnect/retry cases and raw chunk/queue/stage
+observations. Process peaks, cgroup and Docker memory methods remain distinct;
+unknown metrics/failed bytes remain explicit. Crypto expansion, owner work and
+key-cache behavior are not applicable. An illustrative rate card preserves failed
+attempts and incomplete cost coverage. Full branch CI must pass before opening
+the PR; evidence is recorded there. No network capacity or private inference
+qualification follows from this local journal.
+
 ## M0-PR29 — isolated local service fixtures
 
 Issue #7 adds digest-pinned PostgreSQL, SeaweedFS, Redpanda, Temporal, Ray and

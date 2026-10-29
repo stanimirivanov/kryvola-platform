@@ -23,3 +23,12 @@ jobs:
       - run: uv run --locked python tools/install_cosign.py
       - run: uv run --locked python tools/verify.py full
       - run: uv run --locked python -m kryvola_platform config/foundation.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: public-network-observations
+          path: |
+            build/integration/*/network-report.json
+            build/integration/*/network-observations.jsonl
+          if-no-files-found: ignore
+          retention-days: 7

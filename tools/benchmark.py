@@ -38,12 +38,25 @@ def self_test() -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["self-test", "run"])
+    parser.add_argument("action", choices=["self-test", "run", "network-check"])
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--check-only", action="store_true")
     args = parser.parse_args()
+    if args.check_only and args.action != "network-check":
+        parser.error("--check-only is supported only for network-check")
+    if args.action == "network-check" and (args.manifest or args.output):
+        parser.error("network-check owns its profile and output directory")
     if args.action == "self-test":
         self_test()
+    elif args.action == "network-check":
+        from network_benchmark import execute, profiles
+
+        if args.check_only:
+            profiles()
+            print("Network profile configuration valid; no services or measurements")
+        else:
+            execute()
     else:
         if args.manifest is None or args.output is None:
             parser.error("run requires --manifest and --output")

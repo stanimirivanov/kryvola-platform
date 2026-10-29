@@ -1,0 +1,15 @@
+{
+  "lan": {"latency_ms_each_direction": 0, "bandwidth_decimal_kB_s_each_direction": 0},
+  "wan": {"latency_ms_each_direction": 120, "bandwidth_decimal_kB_s_each_direction": 128},
+  "chunks": 4,
+  "chunk_bytes": 65536,
+  "concurrency": 1,
+  "max_retries": 1,
+  "rate_card": {
+    "kind": "ILLUSTRATIVE_NOT_VENDOR_BILL",
+    "currency": "USD",
+    "container_nano_usd_per_second": 1000000,
+    "download_payload_nano_usd_per_gib": 100000000,
+    "charged_containers": ["transfer", "toxiproxy"]
+  }
+}
