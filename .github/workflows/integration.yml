@@ -21,6 +21,9 @@ jobs:
           version: "0.12.5"
       - run: uv sync --locked
       - run: uv run --locked python tools/install_cosign.py
+      - run: uv run --locked python tools/release_conformance.py fetch
+        env:
+          GH_TOKEN: ${{ github.token }}
       - run: uv run --locked python tools/workflow_assets.py install
       - run: uv sync --locked --extra conformance
       - run: uv run --locked --extra conformance python tools/verify.py full
@@ -33,5 +36,6 @@ jobs:
             build/integration/*/network-report.json
             build/integration/*/network-observations.jsonl
             build/integration/*/fake-workflow-report.json
+            build/integration/*/release-conformance-report.json
           if-no-files-found: ignore
           retention-days: 7

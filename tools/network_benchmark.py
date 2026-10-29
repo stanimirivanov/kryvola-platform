@@ -343,6 +343,11 @@ def observe(stack):
 
 def execute():
     profiles()  # Reject changed configuration before provisioning anything.
+    if __package__:
+        from . import release_conformance
+    else:
+        import release_conformance
+    admission = release_conformance.controls()
     stack = integration.Stack("kryvola-m0-" + secrets.token_hex(6))
     try:
         stack.up()
@@ -350,8 +355,10 @@ def execute():
             from .fake_workflow import smoke
         else:
             from fake_workflow import smoke
-        smoke(stack)
-        return observe(stack)
+        fake = smoke(stack)
+        report = observe(stack)
+        release_conformance.finish(stack, fake, admission)
+        return report
     finally:
         if stack.claimed and integration.ACTIVE.exists():
             stack.down()

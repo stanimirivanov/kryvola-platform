@@ -317,7 +317,7 @@ class Stack:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["check", "up", "down", "smoke"])
+    parser.add_argument("command", choices=["check", "up", "down", "smoke", "ci"])
     args = parser.parse_args()
     if args.command == "check":
         configuration()
@@ -336,6 +336,12 @@ def main():
         finally:
             if stack.claimed and ACTIVE.exists():
                 stack.down()
+    elif args.command == "ci":
+        if __package__:
+            from .network_benchmark import execute
+        else:
+            from network_benchmark import execute
+        execute()
     else:
         Stack(json.loads(ACTIVE.read_text())["project"]).down()
 
