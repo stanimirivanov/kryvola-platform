@@ -54,6 +54,14 @@
       "environment": {"RAY_USAGE_STATS_ENABLED": "0"},
       "entrypoint": ["ray"], "command": ["start", "--head", "--port=6379", "--include-dashboard=false", "--num-cpus=1", "--object-store-memory=100000000", "--disable-usage-stats", "--block"]
     },
+    "transfer": {
+      "image": "python@sha256:7bf6c3111fe094f8ee1a1cbcdc63c4cfb345b0e3df42d5aa9a90b3b4b022ab6d",
+      "platform": "linux/amd64", "networks": ["data"], "mem_limit": "128m", "pids_limit": 32,
+      "user": "65532:65532", "read_only": true,
+      "environment": {"PYTHONDONTWRITEBYTECODE": "1"},
+      "command": ["python", "/fixture/worker.py", "server"],
+      "volumes": ["./config/network-profiles/worker.py:/fixture/worker.py:ro"]
+    },
     "toxiproxy": {
       "image": "ghcr.io/shopify/toxiproxy@sha256:9941f0357759e6c9bfe0ad45e20c415100505113da0f5c436cfd0a4d27579fdc",
       "platform": "linux/amd64", "networks": ["data"], "mem_limit": "64m"

@@ -25,8 +25,10 @@ NETWORKS = {
     "s3-client": "data",
     "redpanda": "data",
     "toxiproxy": "data",
+    "transfer": "data",
 }
 MOUNTS = {
+    "transfer": ["./config/network-profiles/worker.py:/fixture/worker.py:ro"],
     "postgres": ["postgres:/var/lib/postgresql/data"],
     "schema": ["./config/local-services/schema.sh:/fixture/schema.sh:ro"],
     "temporal": ["./config/local-services/dynamicconfig.yaml:/etc/temporal/fixture.yaml:ro"],
@@ -77,6 +79,13 @@ def configuration(value=None):
             raise ValueError("UNSAFE_SERVICE_BOUNDARY")
     if set(value["services"]["ray"]["environment"]) != {"RAY_USAGE_STATS_ENABLED"}:
         raise ValueError("COMPUTE_CREDENTIAL_INJECTION")
+    transfer = value["services"]["transfer"]
+    if (
+        transfer.get("user") != "65532:65532"
+        or transfer.get("read_only") is not True
+        or transfer.get("environment") != {"PYTHONDONTWRITEBYTECODE": "1"}
+    ):
+        raise ValueError("TRANSFER_SANDBOX_DRIFT")
     return value
 
 
