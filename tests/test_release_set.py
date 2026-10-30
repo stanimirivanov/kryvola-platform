@@ -125,9 +125,7 @@ class ReleaseTests(unittest.TestCase):
             b"fixture-reviewer-key",
             trusted,
         )
-        self.verifier = Cosign(
-            ROOT / ".tools" / ("cosign.exe" if platform.system() == "Windows" else "cosign")
-        )
+        self.verifier = Cosign(ROOT / ".tools" / "cosign")
         self.bundle = b"fixture-review-bundle"
 
     def admit(self, raw=None, policy=None):

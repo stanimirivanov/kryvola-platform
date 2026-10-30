@@ -5,7 +5,6 @@ import importlib.metadata
 import importlib.util
 import json
 import os
-import platform
 import shutil
 import sys
 import tomllib
@@ -214,7 +213,7 @@ def probe(case):
             shutil.copyfile(ROOT / name, root / name)
         assets = root / "assets"
         shutil.copytree(workflow_assets.OUTPUT, assets)
-        executable = "cosign.exe" if platform.system() == "Windows" else "cosign"
+        executable = "cosign"
         (root / ".tools").mkdir()
         try:
             os.link(ROOT / ".tools" / executable, root / ".tools" / executable)

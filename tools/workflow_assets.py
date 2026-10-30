@@ -62,7 +62,7 @@ def pins(lock=None):
 def verify(root=None, output=None, lock=None):
     root, output = root or ROOT, output or OUTPUT
     locked = pins(lock) if lock is not None else pins()
-    executable = root / ".tools" / ("cosign.exe" if platform.system() == "Windows" else "cosign")
+    executable = root / ".tools" / "cosign"
     if digest(executable, 256 << 20) != COSIGN_DIGESTS[platform.system()]:
         raise ValueError("WORKFLOW_VERIFIER_PIN")
     for role, component in locked.items():

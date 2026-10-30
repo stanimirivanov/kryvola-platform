@@ -29,7 +29,7 @@ class WorkflowAssetTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             (root / ".tools").mkdir()
-            name = "cosign.exe" if platform.system() == "Windows" else "cosign"
+            name = "cosign"
             (root / ".tools" / name).write_bytes(b"verifier-fixture")
             (root / "fabric").mkdir()
             (root / "fabric/manifest.json").write_bytes(b"changed")
