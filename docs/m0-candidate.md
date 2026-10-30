@@ -1,5 +1,9 @@
 # Exact unsigned M0 candidate assembly
 
+Follow the [operator procedure](m0-release-qualification.md) for input selection,
+component verification, environment setup and the handoff to live qualification.
+It preserves pending approvals and separates publication from local execution.
+
 `tools/m0_candidate.py` resolves five independently selected publisher inputs into
 new candidate/lock bytes. It does not sign, test, publish, ratify or accept the
 composition. The existing synthetic config/release-candidate.json is never edited.
