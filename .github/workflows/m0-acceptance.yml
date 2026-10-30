@@ -1,0 +1,121 @@
+name: guarded-m0-acceptance
+on:
+  workflow_dispatch:
+    inputs:
+      input_run_id:
+        description: Same-repository staging run containing public request and asset inputs
+        required: true
+        type: string
+      payload_sha256:
+        description: Independently reviewed expected acceptance payload SHA-256
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: guarded-m0-acceptance
+  cancel-in-progress: false
+env:
+  PAYLOAD_SHA: ${{ inputs.payload_sha256 }}
+jobs:
+  qualify:
+    if: github.ref == 'refs/heads/main' && vars.M0_ACCEPTANCE_PUBLICATION_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          version: "0.12.5"
+      - run: uv sync --locked --extra conformance
+      - run: uv run --locked python tools/install_cosign.py
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: m0-acceptance-inputs
+          path: build/inputs
+          run-id: ${{ inputs.input_run_id }}
+          github-token: ${{ github.token }}
+      - name: Read independently configured operator trust
+        env:
+          POLICY_JSON: ${{ vars.M0_ACCEPTANCE_POLICY_JSON }}
+        run: |
+          python - <<'PYTHON'
+          import json, os
+          from pathlib import Path
+          value = os.environ['POLICY_JSON']
+          assert isinstance(json.loads(value), dict)
+          Path('build/operator-policy.json').write_text(value, encoding='utf-8')
+          PYTHON
+      - name: Require fully authenticated acceptance before creating payload
+        run: |
+          uv run --locked --extra conformance python tools/m0_publication.py prepare --request build/inputs/request --assets build/inputs/assets --policy build/operator-policy.json --source "$GITHUB_SHA" --folder build/m0-publication
+          python - <<'PYTHON'
+          import hashlib, os, re
+          from pathlib import Path
+          expected = os.environ['PAYLOAD_SHA']
+          assert re.fullmatch('[a-f0-9]{64}', expected)
+          assert hashlib.sha256(Path('build/m0-publication/acceptance.json').read_bytes()).hexdigest() == expected
+          PYTHON
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: qualified-m0-payload
+          path: build/m0-publication/*
+          if-no-files-found: error
+          retention-days: 7
+  publish:
+    needs: qualify
+    if: github.ref == 'refs/heads/main' && vars.M0_ACCEPTANCE_PUBLICATION_ENABLED == 'true'
+    environment: m0-acceptance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          version: "0.12.5"
+      - run: uv sync --locked --extra conformance
+      - run: uv run --locked python tools/install_cosign.py
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: m0-acceptance-inputs
+          path: build/inputs
+          run-id: ${{ inputs.input_run_id }}
+          github-token: ${{ github.token }}
+      - name: Read independently configured operator trust
+        env:
+          POLICY_JSON: ${{ vars.M0_ACCEPTANCE_POLICY_JSON }}
+        run: |
+          python - <<'PYTHON'
+          import json, os
+          from pathlib import Path
+          value = os.environ['POLICY_JSON']
+          assert isinstance(json.loads(value), dict)
+          Path('build/operator-policy.json').write_text(value, encoding='utf-8')
+          PYTHON
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: qualified-m0-payload
+          path: build/m0-publication
+      - name: Sign and re-evaluate original approvals and exact composition
+        run: |
+          .tools/cosign sign-blob --yes --bundle build/m0-publication/acceptance.sigstore.json build/m0-publication/acceptance.json
+          uv run --locked --extra conformance python tools/m0_publication.py verify --assets build/inputs/assets --policy build/operator-policy.json --source "$GITHUB_SHA" --folder build/m0-publication --sha256 "$PAYLOAD_SHA"
+      - name: Publish fresh exact acceptance payload only after re-verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="m0-acceptance-${GITHUB_SHA}-${PAYLOAD_SHA}"
+          existing="$(git ls-remote --tags origin "refs/tags/$tag")"
+          if [ -n "$existing" ]; then echo 'Tag exists'; exit 1; fi
+          if gh release view "$tag"; then echo 'Release exists'; exit 1; fi
+          gh release create "$tag" --target "$GITHUB_SHA" --draft --prerelease --title "$tag" --notes 'Reviewed M0 non-production baseline for M1 development only; no production profile or deployment authorization.' build/m0-publication/acceptance.json build/m0-publication/acceptance.sigstore.json build/m0-publication/evidence.tar
+          gh release edit "$tag" --draft=false

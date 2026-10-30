@@ -139,3 +139,8 @@ reviewer decisions/signatures. None contains its own future hash. Do not use a
 signed decision's hash as legal.json's hash or put packet hashes into the ratification.
 Policy pins and signatures remain separate. Evidence authenticity does not establish
 reviewer expertise; offline withdrawal/freshness limits remain those of PR8.
+
+[Guarded acceptance publication](m0-publication.md) describes the disabled-by-default
+manual workflow and re-evaluation of downloaded signed evidence. Publication still
+requires supplied approvals and independent operator enablement; none is inferred
+from this evaluator or a merge.

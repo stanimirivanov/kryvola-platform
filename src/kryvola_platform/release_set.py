@@ -194,6 +194,8 @@ class Cosign:
                     identity,
                 )
                 is not None
+                or identity
+                == "https://github.com/stanimirivanov/kryvola-platform/.github/workflows/m0-acceptance.yml@refs/heads/main"
             )
             with TemporaryDirectory(prefix="kryvola-publisher-") as directory:
                 root = Path(directory)
