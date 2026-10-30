@@ -262,3 +262,21 @@ pending ratification, bad signatures, cleanup/source/control/isolation failures,
 unresolved conditions, production claims and safe CLI rejection. Existing BLOCKED
 audit tests still pass. No real approvals or selected live set were supplied;
 Docker/OIDC and actual acceptance were not exercised or asserted.
+
+## M0-CLOSE-PR13: guarded detached acceptance publication infrastructure
+
+Issue #36 adds approval-gated payload preparation and downloaded signature/evidence
+re-verification, plus a manual main-only workflow disabled unless an operator
+explicitly configures enablement and trust. Publisher write/OIDC permissions are
+isolated and the independently expected payload digest is mandatory. No actual
+approvals, policy/enablement variables, acceptance payloads or releases are supplied,
+created or published by this implementation; synthetic tests use temporary data.
+
+Local fast harness, Ruff formatting/lint and ty passed. All 106 Python tests passed
+with existing real-signature coverage enabled. Six new publication tests cover
+pending/failed input evaluation, independent source/hash/policy and signature
+failure, incomplete/changed downloads, re-evaluation after withdrawal, safe evidence
+allowlisting/traversal rejection and opt-in workflow separation. Publication tests
+use synthetic temporary payloads and mocked publisher verification; GitHub OIDC
+and real approved acceptance were not run. No workflow settings, approvals or
+actual acceptance artifacts were enabled, signed, dispatched or published.
