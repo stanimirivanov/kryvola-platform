@@ -237,3 +237,10 @@ and wrong OCI runtime settings. No real selected five-component installation was
 supplied, and Docker was unavailable, so live qualification was not executed.
 Retention is a local digest-bound evidence archive; remote durable storage and
 acceptance/publication remain explicit later actions.
+
+PR10 CI feedback: one verify run failed at upstream fetch while another passed.
+Inspection reproduced HTTP 502 from the pinned jobs API; the original generic log
+did not expose its exact exception. Fetch now retries bounded transient failures
+and emits safe diagnostic codes, preserving permanent failures and all evidence
+checks. The actual pinned fetch, fast/Ruff/ty gates and all 94 Python tests (real
+signature coverage enabled) passed locally. Docker live checks were not rerun.
