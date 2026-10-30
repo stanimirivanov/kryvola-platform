@@ -39,5 +39,8 @@ jobs:
             build/integration/*/release-conformance-report.json
             build/integration/*/isolation-report.json
             build/campaigns/*/summary.json
+            build/m0/*/lock.json
+            build/m0/*/report.json
+            build/m0/*/manifest.json
           if-no-files-found: ignore
           retention-days: 7

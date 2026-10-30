@@ -28,6 +28,7 @@ def main() -> None:
     run(sys.executable, "tools/integration.py", "check")
     run(sys.executable, "tools/workflow_assets.py", "check")
     run(sys.executable, "tools/release_conformance.py", "check")
+    run(sys.executable, "tools/m0_acceptance.py", "--check")
     run(sys.executable, "tools/benchmark.py", "network-check", "--check-only")
     run(
         sys.executable,

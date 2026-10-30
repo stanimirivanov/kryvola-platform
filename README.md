@@ -1,5 +1,9 @@
 # kryvola-platform
 
+[M0 acceptance audits](docs/m0-acceptance.md) retain exact source/artifact evidence
+and mandatory blockers. The current result is BLOCKED; audit success does not
+approve M0, M1 or production.
+
 Python platform inventory and qualification harness. This is an initial M0 foundation, with no production execution or security qualification. Existing Apache-2.0 licensing is preserved.
 
 ## Setup and verification

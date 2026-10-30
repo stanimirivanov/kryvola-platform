@@ -1,0 +1,23 @@
+{
+  "ratification": {
+    "repository": "kryvola-spec",
+    "revision": "e9100ee4f97ee2a4e0ab4b4f1a9c1b5cbfadb8a8",
+    "source_path": "docs/m0-ratification.md",
+    "file": "evidence/m0/ratification.md",
+    "sha256": "efdbed586b91ff08c2c08fdc6a0acdfa01bd08248e1c520a01a039b826a7c03d"
+  },
+  "crypto": {
+    "repository": "kryvola-engines",
+    "revision": "a60dd541cf3bd18389d99cba3a7126e02a479963",
+    "source_path": "docs/m0-feasibility.md",
+    "file": "evidence/m0/crypto-review.md",
+    "sha256": "b37719d3861413f40879b35780c3d673a228db68f22c2678c0a373e604b90c3b"
+  },
+  "ml": {
+    "repository": "kryvola-ml",
+    "revision": "dcba320678eb454047e29c8a42417ffe8d94a323",
+    "source_path": "fixtures/fhe-q1/manifest.json",
+    "file": "evidence/m0/ml-manifest.json",
+    "sha256": "16268b514e2d8618113d439052975909dd8642bb3c374c1e6bf53a2d477bac21"
+  }
+}

@@ -341,7 +341,7 @@ def observe(stack):
     return report
 
 
-def execute():
+def execute(*, acceptance_audit=False):
     profiles()  # Reject changed configuration before provisioning anything.
     if __package__:
         from . import release_conformance
@@ -363,7 +363,13 @@ def execute():
             from isolation import qualify
         qualify(stack, fake)
         release_conformance.finish(stack, fake, admission)
-        return report
     finally:
         if stack.claimed and integration.ACTIVE.exists():
             stack.down()
+    if acceptance_audit:
+        if __package__:
+            from .m0_acceptance import publish
+        else:
+            from m0_acceptance import publish
+        publish(live=stack.folder)
+    return report

@@ -1,5 +1,21 @@
 # Foundation progress
 
+## M0-PR37 — detached acceptance audits
+
+Issue #19 adds the [M0 acceptance audit](m0-acceptance.md), immutable upstream
+review/fixture pins and a detached five-source evidence inventory generated from
+the tested platform commit. Full checks emit it only after the existing owned
+live conformance/isolation gates and cleanup. The default acceptance command fails
+for current mandatory gaps; explicit audit mode only verifies a blocked record.
+Negative controls cover changed evidence, stale/false live claims, missing
+controls, output tampering and cleanup order. No synthetic candidate is promoted.
+
+Result: BLOCKED. Ratification sign-offs, scoped legal/parameter approval and a
+signed tested five-component release set (including ML/platform artifacts) remain
+missing. Optional exclusions stay separate. M0/M1 acceptance and production remain
+disabled; a merged implementation PR cannot supply specialist approval. Local
+checks and full pre-PR CI/artifact evidence are recorded in the PR.
+
 ## M0-PR26 — shaped transfer/resource observations
 
 Issue #9 adds pinned synthetic LAN/WAN profiles, a bounded public HTTP fixture,
