@@ -147,3 +147,11 @@ Observed: both complete engines workflow attempts passed; two fresh key contexts
 The checked-in summary replays exactly, retaining all missing-stage reasons and
 INCONCLUSIVE qualification. The final pre-PR platform CI result is recorded in the PR.
 No crypto binary, owner key, ciphertext or proof object is imported into platform.
+
+## M0-CLOSE-PR5: experimental platform driver publication
+
+Issue #23 adds source-addressed wheel and tracked driver archive qualification,
+SBOM/provenance, checksum-pinned tools and manual main-only signed publication.
+Installed offline driver checks import runtime code from the exact wheel outside
+the checkout. Live source-bound audits retain their clean Git checkout requirement.
+M0 acceptance and legal/security decisions remain pending; no profile is enabled.
