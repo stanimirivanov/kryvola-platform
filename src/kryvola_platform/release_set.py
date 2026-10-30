@@ -22,7 +22,6 @@ MAX_METADATA = 131072
 COSIGN_VERSION = "v3.1.3"
 COSIGN_DIGESTS = {
     "Linux": "4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71",
-    "Windows": "9fe59be0eca1271873ce019061335eb1ac419b7059202e797828467ddabe33be",
 }
 _SPEC = files("kryvola_platform").joinpath("_spec")
 _MANIFEST = _SPEC.joinpath("manifest.json").read_bytes()

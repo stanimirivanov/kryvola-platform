@@ -53,7 +53,7 @@ cryptographic feasibility remain owning-spec and later qualification gates.
 ## Signature mode and limits
 
 The standalone verifier is [Cosign v3.1.3](https://github.com/sigstore/cosign/releases/tag/v3.1.3)
-(Apache-2.0), pinned by official release-asset SHA-256 for Linux/Windows x64 and
+(Apache-2.0), pinned by official release-asset SHA-256 for Linux x64 and
 rechecked before execution. Installation is an explicit build/CI action, never
 part of admission. It adds no Python dependency. The
 [pinned-key blob interface](https://github.com/sigstore/cosign/blob/v3.1.3/doc/cosign_verify-blob.md)

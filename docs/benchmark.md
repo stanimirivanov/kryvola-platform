@@ -2,8 +2,8 @@
 
 `uv run --locked python tools/benchmark.py self-test` runs a tiny synthetic Linux
 workload; `uv run --locked python tools/verify.py full` runs this plus the unit
-suite on CI. Windows supports metadata/statistics tests and fast checks; execution
-requires Linux process groups and selectable pipes. No dependencies are added.
+suite on CI. Execution requires Linux process groups and selectable pipes.
+No dependencies are added.
 
 Run a trusted public workload using
 `uv run --locked python tools/benchmark.py run --manifest job.json --output run-001`.
