@@ -78,3 +78,6 @@ The [M0-PR34 research campaign harness](docs/campaigns.md) replays pinned numeri
 engine observations with `tools/benchmark.py run --profile config/benchmarks/fhe-q1.json`.
 Full CI validates the captures and existing live gates; fast profile checks
 provision nothing. Research evidence remains inconclusive for production latency.
+
+[Experimental driver publication](docs/publication.md) describes the wheel/archive
+layout, qualification, manual publishing and independent signature verification.
