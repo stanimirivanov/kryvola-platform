@@ -10,12 +10,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from kryvola_platform.release_set import COSIGN_DIGESTS
-
-if __package__:
-    from . import integration
-else:
-    import integration
+from kryvola_platform.release_set import COSIGN_DIGESTS, Cosign, ReleaseError
 
 ROOT = Path(__file__).resolve().parents[1]
 LOCK = ROOT / "config/fake-workflow/releases.json"
@@ -70,26 +65,17 @@ def verify(root=None, output=None, lock=None):
         for name, expected in component["assets"].items():
             if digest(folder / name) != expected:
                 raise ValueError("WORKFLOW_ASSET_CHANGED")
-        result = integration.run(
-            [
-                executable,
-                "verify-blob",
-                "--bundle",
-                folder / "manifest.sigstore.json",
-                "--certificate-identity",
+        try:
+            Cosign(executable).verify_publisher(
+                (folder / "manifest.json").read_bytes(),
+                (folder / "manifest.sigstore.json").read_bytes(),
                 f"https://github.com/stanimirivanov/kryvola-{role}/.github/workflows/release.yml@refs/heads/main",
-                "--certificate-oidc-issuer",
-                "https://token.actions.githubusercontent.com",
-                "--certificate-github-workflow-sha",
                 component["source"],
-                "--certificate-github-workflow-trigger",
-                "workflow_dispatch",
-                folder / "manifest.json",
-            ],
-            timeout=60,
-        )
-        if result.returncode:
-            raise ValueError("WORKFLOW_PUBLISHER_REJECTED")
+            )
+        except ReleaseError:
+            # Keep the fixture boundary's stable error code: admission probes
+            # distinguish intended signature denial from unrelated setup failures.
+            raise ValueError("WORKFLOW_PUBLISHER_REJECTED") from None
         manifest = json.loads((folder / "manifest.json").read_bytes())
         if (
             manifest["source"] != component["source"]

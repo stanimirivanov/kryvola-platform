@@ -86,3 +86,46 @@ Explicit setup: `uv run --locked python tools/install_cosign.py`, then
 `uv run --locked python tools/verify.py full`. The existing PR workflow runs this
 gate plus the wheel build without cloud credentials. CI results are not inferred
 from configuration. The checked-in unresolved example cannot pass admission.
+
+## Existing publisher admission (M0-CLOSE-PR7)
+
+Components may explicitly select `PublisherPolicy` with independently configured
+publication source, exact signed-manifest SHA-256 and selected subject filename.
+`PublicationInput` supplies that manifest/signature and the exact local subject
+files. Empty component key/provenance/signature fields select this mode only when
+the trusted policy explicitly names a publisher. Mixed modes fail. The release
+candidate still requires its separate reviewer signature and existing legal gate;
+publisher authentication is not specialist approval or M0 acceptance.
+
+The adapter recognizes spec, fabric, ML, platform and fake-engine manifests without
+pretending their provenance has a separate signature. The signed manifest binds
+all artifact/provenance hashes. It checks exact repository/workflow, GitHub issuer,
+source and workflow_dispatch, plus expected subject, builder/build type, labels
+and source/contract dependencies. Existing pinned-key provenance admission remains
+unchanged. Existing workflow asset verification now uses the same isolated keyless
+Cosign boundary, retaining its independently pinned files and role checks.
+
+Keyless verification uses checksum-pinned Cosign with isolated credentials and
+public trust-root/log access; it is not an offline verification guarantee. There
+is no caller-selected issuer, regex identity or ignore-log switch in this mode.
+The verifier never installs tools or downloads release artifacts.
+
+Wheel candidates use the explicit SemVer label `0.1.0-dev0.g<FULL_SHA>` while their
+signed producer version remains `0.1.0.dev0+g<FULL_SHA>`; neither signed record is
+rewritten. References must be the exact source-addressed GitHub asset URL with
+percent-encoded filename and SHA-256 fragment. Spec publication commits may differ
+from the frozen contract source: the bundled generated manifest must match the
+consumed contract bytes. Contract/native adoption checks remain separate.
+
+Fake OCI mode uses subject `@oci-manifest`: the supplied local artifact is the
+exact raw registry manifest whose SHA-256 is the independently selected image
+digest, not a Docker-save tar or image config. The signed OCI record binds that
+reference and archive/Dockerfile hashes. This authenticates the publisher's
+relationship assertion; it does not pull/run an image or independently verify the
+related archive. Existing engine OCI verification and later composition gates must
+check archive contents, image signatures and digest-pulled conformance before use.
+Fake archive admission remains supported and cannot authorize crypto-role archives.
+
+Tests exercise producer shapes and routing with mocked keyless results; actual
+GitHub OIDC/log verification requires published inputs and network access. Missing,
+wrong or unauthenticated inputs cannot become acceptance through these adapters.

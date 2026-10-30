@@ -43,11 +43,57 @@ class WorkflowAssetTests(unittest.TestCase):
                     assets.COSIGN_DIGESTS,
                     {platform.system(): hashlib.sha256(b"verifier-fixture").hexdigest()},
                 ),
-                patch.object(assets.integration, "run") as run,
+                patch.object(assets.Cosign, "verify_publisher") as run,
             ):
                 with self.assertRaisesRegex(ValueError, "WORKFLOW_ASSET_CHANGED"):
                     assets.verify()
                 run.assert_not_called()
+
+    def test_shared_signature_denial_keeps_the_admission_probe_error_code(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / ".tools").mkdir()
+            (root / ".tools/cosign").write_bytes(b"verifier-fixture")
+            folder = root / "fabric"
+            folder.mkdir()
+            for name in ("manifest.json", "manifest.sigstore.json"):
+                (folder / name).write_bytes(b"fixture")
+            locked = {
+                "fabric": {
+                    "source": "a" * 40,
+                    "assets": {
+                        name: assets.digest(folder / name)
+                        for name in ("manifest.json", "manifest.sigstore.json")
+                    },
+                }
+            }
+            with (
+                patch.object(assets, "pins", return_value=locked),
+                patch.dict(
+                    assets.COSIGN_DIGESTS,
+                    {platform.system(): hashlib.sha256(b"verifier-fixture").hexdigest()},
+                ),
+                patch.object(
+                    assets.Cosign,
+                    "verify_publisher",
+                    side_effect=assets.ReleaseError("PUBLISHER_REJECTED"),
+                ),
+            ):
+                with self.assertRaisesRegex(ValueError, "^WORKFLOW_PUBLISHER_REJECTED$"):
+                    assets.verify(root, root)
+            # Unexpected verifier failures must not masquerade as the intended denial.
+            with (
+                patch.object(assets, "pins", return_value=locked),
+                patch.dict(
+                    assets.COSIGN_DIGESTS,
+                    {platform.system(): hashlib.sha256(b"verifier-fixture").hexdigest()},
+                ),
+                patch.object(
+                    assets.Cosign, "verify_publisher", side_effect=RuntimeError("setup failure")
+                ),
+            ):
+                with self.assertRaises(RuntimeError):
+                    assets.verify(root, root)
 
     def test_archive_paths_cannot_escape(self):
         with tempfile.TemporaryDirectory() as temporary:
