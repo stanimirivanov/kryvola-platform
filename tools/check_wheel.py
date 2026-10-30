@@ -69,6 +69,7 @@ def extract_driver(archive, root):
                 stream = tar.extractfile(entry)
                 assert stream is not None
                 path.write_bytes(stream.read())
+                path.chmod(entry.mode & 0o755)
         if not INPUTS <= {p.split("/")[0] for p in seen}:
             raise ValueError("INCOMPLETE_DRIVER")
 

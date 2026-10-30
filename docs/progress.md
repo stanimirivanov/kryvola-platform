@@ -155,3 +155,10 @@ SBOM/provenance, checksum-pinned tools and manual main-only signed publication.
 Installed offline driver checks import runtime code from the exact wheel outside
 the checkout. Live source-bound audits retain their clean Git checkout requirement.
 M0 acceptance and legal/security decisions remain pending; no profile is enabled.
+
+Local fast gate, Ruff/ty and Python discovery passed: 73 tests, one existing
+full-CI-only signature case skipped. Clean committed publication qualification
+passed two identical wheels/driver archives, isolated installed-resource and
+offline-driver checks, SBOM generation and real signature negative controls.
+Docker live qualification and GitHub OIDC publication were not run locally;
+the manual release workflow requires the existing full live gate before publish.
