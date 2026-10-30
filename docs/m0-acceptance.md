@@ -69,3 +69,7 @@ complete composition acceptance are supplied.
 input verifier with independently configured reviewer keys and exact subject/use
 pins. No actual reviewer authority or approval has been supplied. Its result does
 not change this audit's mandatory blockers or add an M0 acceptance path.
+
+[Unsigned candidate assembly](m0-candidate.md) resolves independently selected
+published inputs into a separate candidate and detached lock. It leaves legal
+and ratification pending and composition untested; this audit remains blocked.

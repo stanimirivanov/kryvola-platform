@@ -203,3 +203,19 @@ role/use/subject substitution, expiry/future issuance, missing roles, duplicate
 JSON, stale predecessors, revoked evidence/keys and signature failure. Live Docker
 integration and actual human approval verification were not run; no real reviewer
 credentials or decision records were supplied or changed.
+
+## M0-CLOSE-PR9: exact unsigned candidate assembly
+
+Issue #30 adds deterministic five-component assembly using independently selected
+publisher/source/artifact pins, generated model/report/candidate validation and
+fake-only evidence separation. Missing or changed inputs and invalid publisher
+signatures reject before output creation. Candidate examples, contracts, research
+bytes and pending approval records are unchanged. No actual artifact selection is
+seeded; composition testing and acceptance remain subsequent work.
+
+Local fast harness, Ruff formatting/lint and ty passed. All 87 Python tests passed
+with existing real-signature controls enabled. Four new synthetic assembly tests
+cover deterministic/pending outputs, missing inputs/components, artifact/source/
+manifest drift, mutable references, signature failure, wrong-contract reports and
+fake/crypto evidence substitution. No live five-component artifact set was
+supplied or assembled, and Docker composition/GitHub OIDC were not run locally.
