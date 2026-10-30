@@ -394,7 +394,7 @@ def main():
             from .network_benchmark import execute
         else:
             from network_benchmark import execute
-        execute()
+        execute(acceptance_audit=True)
     else:
         Stack(json.loads(ACTIVE.read_text())["project"]).down()
 
