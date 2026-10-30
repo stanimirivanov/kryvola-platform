@@ -7,6 +7,7 @@ import os
 import platform
 import re
 import subprocess
+import tarfile
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from importlib.resources import files
@@ -76,6 +77,22 @@ def _sha(raw: bytes) -> str:
 
 
 @dataclass(frozen=True)
+class PublisherPolicy:
+    """Independent publisher selection, never inferred from candidate metadata."""
+
+    source: str
+    manifest_sha256: str
+    subject: str
+
+
+@dataclass(frozen=True)
+class PublicationInput:
+    manifest: bytes
+    signature_bundle: bytes
+    assets: Mapping[str, Path]
+
+
+@dataclass(frozen=True)
 class ComponentPolicy:
     """Trusted exact subject, builder/build-type and public key, supplied independently."""
 
@@ -83,6 +100,7 @@ class ComponentPolicy:
     builder_id: str
     build_type: str
     public_key: bytes
+    publisher: PublisherPolicy | None = None
 
 
 @dataclass(frozen=True)
@@ -103,6 +121,7 @@ class ComponentInput:
     artifact: Path
     provenance: bytes
     signature_bundle: bytes
+    publication: PublicationInput | None = None
 
 
 @dataclass(frozen=True)
@@ -154,6 +173,59 @@ class Cosign:
             pass
         if not valid:
             raise ReleaseError("SIGNATURE_REJECTED")
+
+    def verify_publisher(self, payload: bytes, bundle: bytes, identity: str, source: str) -> None:
+        """Keyless mode: online public trust roots/log verification, isolated credentials."""
+        valid = False
+        try:
+            _require(platform.machine().lower() in {"amd64", "x86_64"})
+            _require(not self.executable.is_symlink())
+            with self.executable.open("rb") as stream:
+                _require(
+                    hashlib.file_digest(stream, "sha256").hexdigest()
+                    == COSIGN_DIGESTS[platform.system()]
+                )
+            _require(type(payload) is bytes and len(payload) <= MAX_METADATA)
+            _require(type(bundle) is bytes and 0 < len(bundle) <= MAX_METADATA)
+            _require(re.fullmatch("[a-f0-9]{40}", source) is not None)
+            _require(
+                re.fullmatch(
+                    r"https://github.com/stanimirivanov/kryvola-(spec|fabric|engines|ml|platform)/\.github/workflows/release.yml@refs/heads/main",
+                    identity,
+                )
+                is not None
+            )
+            with TemporaryDirectory(prefix="kryvola-publisher-") as directory:
+                root = Path(directory)
+                (root / "blob").write_bytes(payload)
+                (root / "bundle").write_bytes(bundle)
+                result = subprocess.run(
+                    [
+                        str(self.executable.resolve()),
+                        "verify-blob",
+                        "--bundle",
+                        str(root / "bundle"),
+                        "--certificate-identity",
+                        identity,
+                        "--certificate-oidc-issuer",
+                        "https://token.actions.githubusercontent.com",
+                        "--certificate-github-workflow-sha",
+                        source,
+                        "--certificate-github-workflow-trigger",
+                        "workflow_dispatch",
+                        str(root / "blob"),
+                    ],
+                    cwd=root,
+                    env={"PATH": os.defpath, "HOME": directory},
+                    capture_output=True,
+                    timeout=60,
+                    check=False,
+                )
+                valid = result.returncode == 0
+        except OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError:
+            pass
+        if not valid:
+            raise ReleaseError("PUBLISHER_REJECTED")
 
 
 def _artifact_digest(path: Path) -> str:
@@ -252,8 +324,20 @@ def validate_release_set(
             item, trust = components[name], policy.components[name]
             _require(pin["name"] == "kryvola-" + name)
             _require(item.reference == trust.reference)
-            _require(_immutable(item.reference, pin["artifact_sha256"], pin["version"]))
+            if trust.publisher is None:
+                _require(_immutable(item.reference, pin["artifact_sha256"], pin["version"]))
             _require(_artifact_digest(item.artifact) == pin["artifact_sha256"])
+            if trust.publisher is not None:
+                from .publisher import validate_publication
+
+                _require(
+                    trust.public_key == b""
+                    and item.signature_bundle == b""
+                    and item.provenance == b""
+                )
+                validate_publication(name, pin, item, trust, verifier)
+                continue
+            _require(item.publication is None)
             statement = _json(item.provenance)
             _require(statement["_type"] == "https://in-toto.io/Statement/v1")
             _require(statement["predicateType"] == "https://slsa.dev/provenance/v1")
@@ -296,6 +380,8 @@ def validate_release_set(
         ValidationError,
         RecursionError,
         AttributeError,
+        tarfile.TarError,
+        IndexError,
     ):
         pass
     if not valid:

@@ -43,7 +43,7 @@ class WorkflowAssetTests(unittest.TestCase):
                     assets.COSIGN_DIGESTS,
                     {platform.system(): hashlib.sha256(b"verifier-fixture").hexdigest()},
                 ),
-                patch.object(assets.integration, "run") as run,
+                patch.object(assets.Cosign, "verify_publisher") as run,
             ):
                 with self.assertRaisesRegex(ValueError, "WORKFLOW_ASSET_CHANGED"):
                     assets.verify()
