@@ -244,3 +244,21 @@ did not expose its exact exception. Fetch now retries bounded transient failures
 and emits safe diagnostic codes, preserving permanent failures and all evidence
 checks. The actual pinned fetch, fast/Ruff/ty gates and all 94 Python tests (real
 signature coverage enabled) passed locally. Docker live checks were not rerun.
+
+## M0-CLOSE-PR12: explicit fail-closed acceptance evaluation
+
+Issue #34 adds a separate evaluation path over independently pinned tested
+composition, ratification, authenticated eight-role review, scoped legal/parameter
+evidence and signed release-set admission. The old pending audit and bundles remain
+unchanged. Current actual approvals remain missing; only synthetic test inputs
+exercise success. An accepted evaluation is limited to reviewed M1 development;
+production/profile activation and deployment remain disabled. See m0-acceptance.md
+for explicit inputs, trust boundaries and non-circular review/signature ordering.
+
+Local fast harness, Ruff formatting/lint and ty passed. All 100 Python tests passed
+with existing real-signature controls enabled. Six new evaluator tests cover a
+synthetic complete positive (signature results mocked), missing approvals/artifacts,
+pending ratification, bad signatures, cleanup/source/control/isolation failures,
+unresolved conditions, production claims and safe CLI rejection. Existing BLOCKED
+audit tests still pass. No real approvals or selected live set were supplied;
+Docker/OIDC and actual acceptance were not exercised or asserted.

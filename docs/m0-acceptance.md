@@ -73,3 +73,69 @@ not change this audit's mandatory blockers or add an M0 acceptance path.
 [Unsigned candidate assembly](m0-candidate.md) resolves independently selected
 published inputs into a separate candidate and detached lock. It leaves legal
 and ratification pending and composition untested; this audit remains blocked.
+
+## Explicit acceptance evaluation (M0-CLOSE-PR12)
+
+The historical audit, its pinned pending inputs and BLOCKED bundles are unchanged.
+A separate `--evaluate` path can assess actual supplied approvals and tested
+composition evidence. No default policy, keys, ratification or approval is seeded.
+The current pending inputs still cannot satisfy this path. It emits an evaluation
+JSON to stdout only; signed final publication remains PR13 work.
+
+```sh
+uv run --locked --extra conformance python tools/m0_acceptance.py --evaluate REQUEST_DIRECTORY --assets VERIFIED_ASSETS --policy OPERATOR_POLICY
+```
+
+Do not combine evaluation with audit/generation/verify flags. Failure exits 2;
+no output artifact or acceptance state is written. An accepted result permits
+M1 development under the reviewed non-production scope only. It always retains
+production_ready=false, profile_enabled=false and deployment_authorized=false.
+It is an evaluation over explicitly trusted inputs, not a reusable deployment token.
+
+REQUEST_DIRECTORY contains the unmodified PR10 composition directory plus:
+ratification.json, review-packet.json, legal.json, admitted-candidate.json,
+admitted-candidate.sigstore.json, and reviews/ROLE-SLUG.json/.sigstore.json as in
+review-evidence.md. The PR10 report and every retained input/report hash must pass;
+the candidate is reassembled from publisher inputs and its original pending lock
+must match. Source, package/image, negative-control, isolation and cleanup predicates
+are checked again. Current independently pinned driver configuration must match;
+this evaluator cannot qualify arbitrary incompatible or stale driver profiles.
+
+The operator policy supplies composition_sha256, ratification_sha256,
+selection_sha256, ratification_revision, review_trust and release_policy. The
+review_trust is the independent enrollment/freshness/revocation policy documented
+in review-evidence.md. release_policy supplies candidate_sha256, intended_use,
+reviewer_key (PEM) and five components, each with reference, builder_id, build_type,
+source, manifest_sha256 and subject. These trust choices must not be constructed
+from incoming evidence. Intended use must agree with authenticated role decisions.
+
+The new ratification payload is a local administrative JSON successor with exactly:
+version=1, status=RATIFIED_FOR_M0_NONPRODUCTION, scope (the closure scope),
+contract_revision, candidate_sha256 (tested unsigned candidate), composition_sha256
+(PR10 report), exclusions and empty conditions. It must be independently pinned
+and approved by all eight roles. It is not a reinterpretation of the pending spec
+Markdown record; preserve that history and obtain an explicit actual successor.
+
+The review packet uses the existing PR8 shape. Its composition digest and exclusions
+must match the ratification. candidate_digests must bind candidate.json,
+admitted-candidate.json, selection.json, model.json, measurement.json,
+ratification.json, composition-report.json, legal.json and generated/manifest.json.
+Additional reviewed ownership/native/evidence subjects may be included. All eight
+current authenticated decisions must be unconditional APPROVE. Conditions,
+withdrawals, expiry, missing roles or stale subjects block acceptance.
+
+legal.json has version=1, disposition=REVIEWED_ALLOWED_NONPRODUCTION_FAKE_ONLY,
+intended_use, parameter_set_digest, parameter_security=APPROVED_RESEARCH_BASELINE_ONLY,
+crypto_permissions=DISTRIBUTION_SERVICE_DENIED and empty conditions. This summary
+is bound into the packet signed by the legal/security/other reviewers; it does not
+grant TFHE/SP1 distribution/service rights or production parameter approval.
+The admitted candidate may differ from the tested unsigned candidate only in its
+ratification revision and scoped reviewed legal evidence reference. Existing signed
+release-set admission checks its independent reviewer signature and all publishers.
+
+To avoid circular hashes: first fix tested candidate/report, legal summary and
+ratification bytes; then admitted candidate bytes; then the review packet; then
+reviewer decisions/signatures. None contains its own future hash. Do not use a
+signed decision's hash as legal.json's hash or put packet hashes into the ratification.
+Policy pins and signatures remain separate. Evidence authenticity does not establish
+reviewer expertise; offline withdrawal/freshness limits remain those of PR8.

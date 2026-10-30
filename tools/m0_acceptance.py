@@ -310,12 +310,42 @@ def publish(live=None, output=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--evaluate", type=Path)
+    parser.add_argument("--assets", type=Path)
+    parser.add_argument("--policy", type=Path)
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--audit-only", action="store_true")
     parser.add_argument("--live", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--verify", type=Path)
     args = parser.parse_args()
+    if args.evaluate:
+        if (
+            not args.assets
+            or not args.policy
+            or any((args.check, args.audit_only, args.live, args.output, args.verify))
+        ):
+            parser.error("--evaluate requires --assets and independent --policy only")
+        if __package__:
+            from .m0_accept import evaluate
+        else:
+            from m0_accept import evaluate
+        from kryvola_platform.release_set import Cosign
+
+        try:
+            result = evaluate(
+                args.evaluate,
+                args.assets,
+                campaign.decode(read(args.policy)),
+                Cosign(ROOT / ".tools/cosign"),
+            )
+        except Exception:
+            print("M0_ACCEPTANCE_REJECTED", file=sys.stderr)
+            return 2
+        print(json.dumps(result, sort_keys=True))
+        return 0
+    if args.assets or args.policy:
+        parser.error("--assets/--policy require --evaluate")
     if args.check and (args.audit_only or args.live or args.output or args.verify):
         parser.error("--check only validates pinned inputs")
     if args.verify and (args.live or args.output):
