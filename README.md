@@ -24,6 +24,11 @@ Fast checks need no service credentials or databases; full checks create isolate
 
 ## M0 release-set inputs
 
+The [release-to-qualification operator procedure](docs/m0-release-qualification.md)
+connects component verification, exact installed wheels, candidate assembly and
+live qualification. Publication requires separate authorization; approvals remain
+pending and qualification alone does not close M0.
+
 `release_set.validate_release_set` and `inventory.validate_release_inventory`
 admit local integration inputs against independently supplied `ReleasePolicy`,
 `ComponentPolicy` and checksum-pinned `Cosign` configuration. The separately

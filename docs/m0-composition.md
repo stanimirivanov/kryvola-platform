@@ -1,5 +1,9 @@
 # Exact M0 composition qualification
 
+The [operator procedure](m0-release-qualification.md) connects release verification
+to this gate, including noneditable wheel installation and direct environment
+Python invocation to avoid project resynchronization during qualification.
+
 `tools/m0_composition.py` tests an explicitly selected unsigned candidate. It
 reassembles and compares its candidate/lock and re-verifies every publisher before
 provisioning. No synthetic config example, release pin or signed driver file is
