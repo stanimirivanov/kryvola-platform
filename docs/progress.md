@@ -219,3 +219,21 @@ cover deterministic/pending outputs, missing inputs/components, artifact/source/
 manifest drift, mutable references, signature failure, wrong-contract reports and
 fake/crypto evidence substitution. No live five-component artifact set was
 supplied or assembled, and Docker composition/GitHub OIDC were not run locally.
+
+## M0-CLOSE-PR10: exact composition qualification and retention
+
+Issue #32 adds re-verification of the assembled candidate, signed driver source,
+installed packages and runtime pins around the existing owned live pipeline.
+Fresh report validation and successful cleanup precede evidence bundle emission.
+OCI engine candidates additionally verify image signature/digest runtime and signed
+archive byte agreement. No approval or acceptance is inferred and no pins are
+rewritten; see m0-composition.md for exact-source/setup and retention requirements.
+
+Local fast harness, Ruff formatting/lint and ty passed. All 93 Python tests passed
+with existing real-signature controls enabled. Six new offline tests cover driver/
+installed-byte drift, editable source rejection, tampered bundles, stale reports,
+live/cleanup/isolation failures, post-run input drift, cleanup callback ordering
+and wrong OCI runtime settings. No real selected five-component installation was
+supplied, and Docker was unavailable, so live qualification was not executed.
+Retention is a local digest-bound evidence archive; remote durable storage and
+acceptance/publication remain explicit later actions.

@@ -341,7 +341,7 @@ def observe(stack):
     return report
 
 
-def execute(*, acceptance_audit=False):
+def execute(*, acceptance_audit=False, completed=None):
     profiles()  # Reject changed configuration before provisioning anything.
     if __package__:
         from . import release_conformance
@@ -372,4 +372,6 @@ def execute(*, acceptance_audit=False):
         else:
             from m0_acceptance import publish
         publish(live=stack.folder)
+    if completed is not None:
+        completed(stack.folder)
     return report
