@@ -64,6 +64,44 @@ class ConformanceTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 gate.upstream(bad, trust)
 
+    def test_fetch_retries_only_transient_errors_and_keeps_evidence_checks(self):
+        trust, evidence = self.evidence()
+        timeout = subprocess.TimeoutExpired("gh", 30)
+        transient = subprocess.CompletedProcess([], 1, b"", b"gh: unavailable (HTTP 503)")
+        success = subprocess.CompletedProcess([], 0, b'{"fixture":true}', b"")
+        with (
+            patch.object(gate.integration, "run", side_effect=[timeout, transient, success]) as run,
+            patch.object(gate.time, "sleep"),
+        ):
+            self.assertEqual(gate.fetch_api("fixed-endpoint"), {"fixture": True})
+            self.assertEqual(run.call_count, 3)
+        for response, expected in (
+            (subprocess.CompletedProcess([], 1, b"", b"secret fixture HTTP 403"), "HTTP_403"),
+            (subprocess.CompletedProcess([], 0, b"not-json", b""), "INVALID_JSON"),
+        ):
+            with patch.object(gate.integration, "run", return_value=response) as run:
+                with self.assertRaisesRegex(gate.FetchError, expected):
+                    gate.fetch_api("fixed-endpoint")
+                self.assertEqual(run.call_count, 1)
+        with (
+            patch.object(gate.integration, "run", side_effect=timeout) as run,
+            patch.object(gate.time, "sleep"),
+        ):
+            with self.assertRaisesRegex(gate.FetchError, "TIMEOUT"):
+                gate.fetch_api("fixed-endpoint")
+            self.assertEqual(run.call_count, 3)
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "evidence.json"
+            evidence["run"]["head_sha"] = "b" * 40
+            with (
+                patch.object(gate, "policy", return_value=trust),
+                patch.object(gate, "fetch_api", side_effect=[evidence["run"], evidence["jobs"]]),
+                patch.object(gate, "EVIDENCE", output),
+            ):
+                with self.assertRaises(ValueError):
+                    gate.fetch()
+                self.assertFalse(output.exists())
+
     def test_installed_code_must_equal_the_admitted_wheel(self):
         source = "a" * 40
         version = "0.1.0.dev0+g" + source

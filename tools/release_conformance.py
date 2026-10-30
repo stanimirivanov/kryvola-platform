@@ -5,8 +5,11 @@ import importlib.metadata
 import importlib.util
 import json
 import os
+import re
 import shutil
+import subprocess
 import sys
+import time
 import tomllib
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -110,14 +113,53 @@ def upstream(value, trust):
     }
 
 
+class FetchError(ValueError):
+    """Fixed, non-sensitive fetch diagnostic; never contains API response content."""
+
+
+def fetch_api(endpoint):
+    code = "CONFORMANCE_FETCH_TRANSPORT"
+    for attempt in range(3):
+        try:
+            result = integration.run(["gh", "api", endpoint], timeout=30)
+        except subprocess.TimeoutExpired:
+            code = "CONFORMANCE_FETCH_TIMEOUT"
+        except OSError:
+            raise FetchError("CONFORMANCE_FETCH_CLI_UNAVAILABLE") from None
+        except ValueError:
+            raise FetchError("CONFORMANCE_FETCH_OUTPUT_LIMIT") from None
+        else:
+            if result.returncode == 0:
+                try:
+                    return json.loads(result.stdout)
+                except ValueError, UnicodeError:
+                    raise FetchError("CONFORMANCE_FETCH_INVALID_JSON") from None
+            message = result.stderr.decode("utf-8", errors="replace")
+            status = re.search(r"HTTP (\d{3})", message)
+            if status:
+                number = int(status[1])
+                code = "CONFORMANCE_FETCH_HTTP_" + status[1]
+                if number != 429 and not 500 <= number <= 599:
+                    raise FetchError(code)
+            elif re.search(
+                r"(?i)timeout|connection reset|connection refused|no such host|"
+                r"temporary failure in name resolution|unexpected EOF|context deadline",
+                message,
+            ):
+                code = "CONFORMANCE_FETCH_TRANSPORT"
+            else:
+                raise FetchError("CONFORMANCE_FETCH_CLI_FAILED")
+        if attempt < 2:
+            time.sleep(attempt + 1)
+    raise FetchError(code)
+
+
 def fetch():
     trust = policy()
     base = f"repos/{trust['repository']}/actions/runs/{trust['run_id']}/attempts/{trust['attempt']}"
     value = {}
     for key, endpoint in (("run", base), ("jobs", base + "/jobs?per_page=100")):
-        result = integration.run(["gh", "api", endpoint], timeout=30)
-        result.check_returncode()
-        value[key] = json.loads(result.stdout)
+        value[key] = fetch_api(endpoint)
     value["run"] = {
         k: value["run"][k]
         for k in (
@@ -379,6 +421,9 @@ def main():
 if __name__ == "__main__":
     try:
         main()
+    except FetchError as error:
+        print("RELEASE_CONFORMANCE_ERROR " + str(error), file=sys.stderr)
+        sys.exit(2)
     except ProbeRejected as error:
         print("RELEASE_CONFORMANCE_REJECTED " + str(error), file=sys.stderr)
         sys.exit(1)

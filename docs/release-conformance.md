@@ -81,3 +81,10 @@ The gate reuses GitHub Actions run/job metadata, Cosign, Python wheel/UV identit
 and the existing validators. No new runtime dependency, scheduler, state model or
 cryptographic protocol is introduced. State exploration remains owned by spec;
 M1 retains real physical fencing, recovery, authorization and release work.
+
+Upstream fetch retries timeouts, recognized transport failures, HTTP 429 and HTTP
+5xx at most three times per endpoint, with bounded backoff and the existing output
+and timeout limits. Permanent HTTP errors, malformed responses and invalid upstream
+evidence fail closed. Exhausted fetch errors report a fixed non-sensitive code,
+without raw API responses, URLs or credentials. Source/run/attempt/job requirements
+are unchanged; retries cannot turn failed evidence into success.

@@ -75,3 +75,6 @@ manifest bytes only. Image signatures, archive/image byte comparison, pulling an
 conformance remain later composition/engine-verification gates. Consumer-installed
 contract/resource qualification also remains PR10 work. No live artifact set is
 assembled until actual independently selected published inputs are supplied.
+
+[Exact composition qualification](m0-composition.md) consumes this bundle, requires
+matching installed and embedded pins, and retains only fresh post-cleanup reports.
