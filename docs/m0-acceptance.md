@@ -64,3 +64,8 @@ Withdrawal/supersession must produce a new disposition referencing the previous
 bundle digest rather than editing an earlier bundle. No release tag, deployment
 or production publication occurs. M0 remains open until actual ratification and
 complete composition acceptance are supplied.
+
+[Review evidence authentication](review-evidence.md) supplies a separate local
+input verifier with independently configured reviewer keys and exact subject/use
+pins. No actual reviewer authority or approval has been supplied. Its result does
+not change this audit's mandatory blockers or add an M0 acceptance path.

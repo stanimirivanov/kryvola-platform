@@ -186,3 +186,20 @@ shared verification began returning PUBLISHER_REJECTED. Only ReleaseError is
 translated; unexpected setup errors still propagate and cannot count as negative
 success. Regression coverage and all ten focused workflow/conformance tests passed,
 as did Ruff/ty. Docker live CI was not rerun locally.
+
+## M0-CLOSE-PR8: authenticated scoped review evidence
+
+Issue #28 adds a local administrative verifier using existing pinned-key Cosign,
+independent role/identity/authority and exact subject/use/evidence pins. Expiry,
+revocation and predecessor checks fail closed. Rejection, conditional and withdrawal
+decisions stay blocking. No identities/keys/approvals are seeded; pending legal,
+security and M0/M1 admission remain unchanged. See review-evidence.md for trust
+freshness and authentication limits.
+
+Local fast harness, Ruff formatting/lint and ty passed. All 83 Python tests passed
+with real-signature coverage enabled, including synthetic eight-role review
+signatures and wrong-key rejection. Review negatives cover identity/authority,
+role/use/subject substitution, expiry/future issuance, missing roles, duplicate
+JSON, stale predecessors, revoked evidence/keys and signature failure. Live Docker
+integration and actual human approval verification were not run; no real reviewer
+credentials or decision records were supplied or changed.
