@@ -87,3 +87,9 @@ SOLO_OWNER_REVIEW_REJECTED. No signing, posting, tool installation, network acce
 other than read-only GitHub/public signature verification, or clock override is
 performed. Tests fabricate owner comments; existing real-Cosign tests continue to
 cover publisher and legacy reviewer signature boundaries.
+
+GitHub comment CRLF line endings are normalized to LF before exact approval-field
+comparison; signed JSON and subject/report bytes are never normalized. Comment
+history uses bounded explicit REST pagination (100 per page, at most ten pages)
+compatible with gh 2.46 without --slurp. An over-limit history fails closed rather
+than accepting a partial history or missing a later withdrawal.

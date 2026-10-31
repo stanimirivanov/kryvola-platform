@@ -209,7 +209,7 @@ class SoloTests(unittest.TestCase):
         import json
         from types import SimpleNamespace
 
-        responses = [self.pull, [[self.comment]]]
+        responses = [self.pull, [self.comment]]
         with patch.object(
             gate.subprocess,
             "run",
@@ -220,11 +220,40 @@ class SoloTests(unittest.TestCase):
         self.assertEqual(pull, self.pull)
         self.assertEqual(comments, [self.comment])
         self.assertIn(
-            "repos/stanimirivanov/kryvola-spec/issues/123/comments", run.call_args_list[1].args[0]
+            "repos/stanimirivanov/kryvola-spec/issues/123/comments?per_page=100&page=1",
+            run.call_args_list[1].args[0],
         )
-        self.assertEqual(run.call_args_list[1].args[0][-2:], ["--paginate", "--slurp"])
+        self.assertNotIn("--slurp", run.call_args_list[1].args[0])
         with patch.object(
             gate.subprocess, "run", side_effect=subprocess.CalledProcessError(1, "gh")
         ):
             with self.assertRaises(subprocess.CalledProcessError):
                 gate.github(self.policy)
+
+    def test_github_crlf_comment_preserves_exact_field_checks(self):
+        original = str(self.comment["body"])
+        self.comment["body"] = original.replace("\n", "\r\n")
+        self.assertTrue(self.verify()["owner_approved"])
+        self.comment["body"] = original.replace("\n", "\r")
+        with self.assertRaises(ValueError):
+            self.verify()
+        self.comment["body"] = original.replace("\n", "\r\n").replace(
+            str(self.policy["subject_sha256"]), "0" * 64
+        )
+        with self.assertRaises(ValueError):
+            self.verify()
+
+    def test_rest_pagination_does_not_lose_later_owner_comments(self):
+        import json
+        from types import SimpleNamespace
+
+        responses = [self.pull, [self.comment] * 100, [{**self.comment, "id": 457}]]
+        with patch.object(
+            gate.subprocess,
+            "run",
+            side_effect=[SimpleNamespace(stdout=json.dumps(r).encode()) for r in responses],
+        ) as run:
+            _, comments = gate.github(self.policy)
+        self.assertEqual(len(comments), 101)
+        self.assertEqual(comments[-1]["id"], 457)
+        self.assertTrue(run.call_args_list[-1].args[0][-1].endswith("page=2"))

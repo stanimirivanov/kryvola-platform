@@ -320,3 +320,19 @@ The complete local full gate also passed, including service readiness, replay,
 network, isolation, admission negatives and cleanup. A final read-only API
 hostname pin was checked with the focused solo tests and fast gate afterward.
 Actual owner approval remains pending; no acceptance artifacts were published.
+
+## Owner-approval interoperability — issue #44
+
+The actual owner comment 6547394306 on Spec PR #54 binds the exact subject/report
+hashes and reviewed commit 597e09474381c2b66f1c091f751c25458fe724e8. Verification
+exposed GitHub CRLF line endings and the local gh 2.46 lack of --slurp support.
+Normalize only plain-text comment CRLF to LF and use explicit bounded REST
+pagination; keep strict values, owner identity, head, expiry/revocation and all
+publisher/composition predicates. Historical signed JSON bytes are unchanged.
+
+Fast checks and nine focused tests passed, including CRLF success, changed values/
+bare CR rejection and later-page owner comments. The actual live API and qualified
+evidence verified with this fix: owner_approved=true and eligibility for M0
+ratification, while M0/M1 acceptance, production and deployment remain false.
+The local verification result is retained outside the repo; no approval was posted,
+no ratification was fabricated and no acceptance artifact was published.
