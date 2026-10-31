@@ -280,3 +280,21 @@ allowlisting/traversal rejection and opt-in workflow separation. Publication tes
 use synthetic temporary payloads and mocked publisher verification; GitHub OIDC
 and real approved acceptance were not run. No workflow settings, approvals or
 actual acceptance artifacts were enabled, signed, dispatched or published.
+
+## M0-REL-PR4.2: authenticated successor-record gate
+
+Issue #40 adds a read-only record gate binding independent record/ledger/predecessor
+pins and exact reviewer references to the existing acceptance evaluator. Bounded
+Git object reads verify actual proposal payload, ledger and predecessor bytes
+without importing or executing Spec code. Allowlisted request inputs are snapshotted;
+no real trust, reviewer authority, approval or accepted state is created.
+
+Local fast checks, Ruff formatting/lint and ty passed. All 113 Python tests passed
+with KRYVOLA_RELEASE_SIGNATURE_TESTS=1, including existing real-Cosign positive and
+wrong-key controls. Seven new tests cover actual evaluator delegation with mocked
+fixture signatures, changed bindings/Git subjects, expiry/revocation/failure
+propagation, symlinks, bounded CLI errors and real temporary Git object reads.
+Live full Docker verification was not run locally: Docker socket access and
+installed workflow assets are unavailable. Existing CI retains the full gate.
+Actual reviews and qualification remain pending; no release/acceptance artifact
+was published, and no publisher or acceptance workflow was dispatched.
