@@ -315,3 +315,8 @@ changed PR head, expiry/revocation, rehashed report blockers, tampered live subj
 publisher failure and the authenticated paginated GitHub adapter. New owner API
 responses are synthetic in tests; no actual owner approval is asserted. Docker
 full-gate execution is additionally recorded in the PR verification results.
+
+The complete local full gate also passed, including service readiness, replay,
+network, isolation, admission negatives and cleanup. A final read-only API
+hostname pin was checked with the focused solo tests and fast gate afterward.
+Actual owner approval remains pending; no acceptance artifacts were published.

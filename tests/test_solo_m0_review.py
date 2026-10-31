@@ -216,6 +216,7 @@ class SoloTests(unittest.TestCase):
             side_effect=[SimpleNamespace(stdout=json.dumps(r).encode()) for r in responses],
         ) as run:
             pull, comments = gate.github(self.policy)
+        self.assertEqual(run.call_args_list[0].args[0][2:4], ["--hostname", "github.com"])
         self.assertEqual(pull, self.pull)
         self.assertEqual(comments, [self.comment])
         self.assertIn(

@@ -52,7 +52,7 @@ def github(policy):
         endpoint = (
             f"repos/{repo}/issues/{number}/comments" if suffix else f"repos/{repo}/pulls/{number}"
         )
-        command = ["gh", "api", endpoint]
+        command = ["gh", "api", "--hostname", "github.com", endpoint]
         if paginate:
             command += ["--paginate", "--slurp"]
         raw = subprocess.run(command, capture_output=True, check=True, timeout=30).stdout
