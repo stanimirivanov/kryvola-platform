@@ -48,17 +48,21 @@ def github(policy):
     number = policy["pull_request"]
     require(type(number) is int and number > 0)
 
-    def fetch(suffix, paginate=False):
-        endpoint = (
-            f"repos/{repo}/issues/{number}/comments" if suffix else f"repos/{repo}/pulls/{number}"
-        )
+    def fetch(endpoint, array=False):
         command = ["gh", "api", "--hostname", "github.com", endpoint]
-        if paginate:
-            command += ["--paginate", "--slurp"]
         raw = subprocess.run(command, capture_output=True, check=True, timeout=30).stdout
-        return rs._json(b'{"pages":' + raw + b"}")["pages"] if paginate else rs._json(raw)
+        return rs._json(b'{"page":' + raw + b"}")["page"] if array else rs._json(raw)
 
-    return fetch(""), [r for page in fetch("/comments", True) for r in page]
+    pull = fetch(f"repos/{repo}/pulls/{number}")
+    comments = []
+    # Explicit bounded REST pagination also supports gh versions without --slurp.
+    for page in range(1, 11):
+        items = fetch(f"repos/{repo}/issues/{number}/comments?per_page=100&page={page}", True)
+        require(type(items) is list and len(items) <= 100)
+        comments.extend(items)
+        if len(items) < 100:
+            return pull, comments
+    raise ValueError("OWNER_COMMENT_HISTORY_TOO_LARGE")
 
 
 def approval_body(subject, report, intended_use, revision):
@@ -168,7 +172,7 @@ def verify(root, assets, policy, verifier, *, fetch=github, now=None):
     require(latest["id"] == policy["approval_comment_id"])
     require(review_evidence.timestamp(latest["updated_at"]) <= now)
     require(
-        latest["body"].strip()
+        latest["body"].replace("\r\n", "\n").strip()
         == approval_body(
             policy["subject_sha256"],
             policy["agentic_review_sha256"],
