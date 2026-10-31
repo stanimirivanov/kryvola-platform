@@ -298,3 +298,25 @@ Live full Docker verification was not run locally: Docker socket access and
 installed workflow assets are unavailable. Existing CI retains the full gate.
 Actual reviews and qualification remain pending; no release/acceptance artifact
 was published, and no publisher or acceptance workflow was dispatched.
+
+## Solo-owner agentic review — issue #42
+
+Add an explicit v2 SOLO_OWNER_AGENTIC_V1 gate using one digest-bound agentic report
+and one current owner GitHub PR comment, with independent policy, expiry and
+revocation checks. Existing exact composition/publisher/live-control verification
+is shared without changing the historical eight-role decision or legal semantics.
+No owner approval, policy, role key or positive agentic report is seeded. Output
+is eligibility for later solo ratification only; no M0/M1/production state changes
+or acceptance publication occur. The legacy publisher does not consume this path.
+
+Fast checks and all 120 Python tests passed with existing real-Cosign coverage.
+Seven new tests cover actual composition delegation, missing/wrong/withdrawn owner,
+changed PR head, expiry/revocation, rehashed report blockers, tampered live subjects,
+publisher failure and the authenticated paginated GitHub adapter. New owner API
+responses are synthetic in tests; no actual owner approval is asserted. Docker
+full-gate execution is additionally recorded in the PR verification results.
+
+The complete local full gate also passed, including service readiness, replay,
+network, isolation, admission negatives and cleanup. A final read-only API
+hostname pin was checked with the focused solo tests and fast gate afterward.
+Actual owner approval remains pending; no acceptance artifacts were published.

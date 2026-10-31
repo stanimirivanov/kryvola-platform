@@ -150,3 +150,9 @@ adds an optional record-bound gate using the same evaluator, independent policy
 and original inputs. It additionally verifies the frozen proposal Git contents;
 its output is record authentication only and does not replace this evaluation's
 policy or authorize publication. Historical audit behavior is unchanged.
+
+[The v2 solo-owner review gate](solo-owner-review.md) reuses this evaluator's exact
+composition predicates but does not manufacture legacy legal approval, eight
+signed decisions or an admitted candidate. Its result is eligibility for a new
+solo-governance ratification only; the acceptance publisher cannot consume it.
+Actual owner approval remains pending.

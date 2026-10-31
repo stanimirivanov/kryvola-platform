@@ -124,3 +124,7 @@ withdrawal/revocation, conditional/rejected decisions and publisher/candidate
 failures propagate from existing verification. Offline verification cannot discover
 unprovided revocations. Any changed subjects require renewed affected decisions.
 Actual reviews, qualification and acceptance publication remain pending.
+
+[Solo-owner agentic review](solo-owner-review.md) provides a separate v2 path for
+the owner's simplified governance direction. The eight-role format and signatures
+above remain historical/legacy semantics, not requirements of the new path.

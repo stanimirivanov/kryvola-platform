@@ -21,14 +21,7 @@ require = review_evidence.require
 fields = review_evidence.fields
 
 
-def evaluate(root, assets, policy, verifier, *, now=None):
-    # Policy comes from the operator, never the request or publisher.
-    policy = rs._json(m0_candidate.encode(policy))
-    fields(
-        policy,
-        "composition_sha256 ratification_sha256 selection_sha256 "
-        "ratification_revision review_trust release_policy",
-    )
+def verify_composition(root, assets, policy, verifier):
     composition = root / "composition"
     report_raw = read(composition / "report.json")
     require(rs._sha(report_raw) == policy["composition_sha256"])
@@ -101,6 +94,21 @@ def evaluate(root, assets, policy, verifier, *, now=None):
         report["platform_source"],
         releases,
     )
+    return candidate, base, report, selection_raw, model, measurement, report_raw
+
+
+def evaluate(root, assets, policy, verifier, *, now=None):
+    # Policy comes from the operator, never the request or publisher.
+    policy = rs._json(m0_candidate.encode(policy))
+    fields(
+        policy,
+        "composition_sha256 ratification_sha256 selection_sha256 "
+        "ratification_revision review_trust release_policy",
+    )
+    candidate, base, report, selection_raw, model, measurement, report_raw = verify_composition(
+        root, assets, policy, verifier
+    )
+    selected = rs._json(selection_raw)["components"]
     ratification_raw, subject, admitted, legal_raw = (
         read(root / name)
         for name in (
