@@ -144,3 +144,9 @@ reviewer expertise; offline withdrawal/freshness limits remain those of PR8.
 manual workflow and re-evaluation of downloaded signed evidence. Publication still
 requires supplied approvals and independent operator enablement; none is inferred
 from this evaluator or a merge.
+
+[Recorded successor verification](review-evidence.md#recorded-successor-verification-m0-rel-pr42)
+adds an optional record-bound gate using the same evaluator, independent policy
+and original inputs. It additionally verifies the frozen proposal Git contents;
+its output is record authentication only and does not replace this evaluation's
+policy or authorize publication. Historical audit behavior is unchanged.
