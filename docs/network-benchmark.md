@@ -58,7 +58,7 @@ The JSON report remains under the owned ignored fixture directory after teardown
 An append-only JSONL journal preserves completed raw batches before validation;
 failed runs without a final report remain incomplete. CI retains only these two
 public synthetic measurement files for seven days, including partial journals on
-failure, using a commit-pinned upload action. Credential/configuration files are
+failure, using a major-version-tagged upload action. Credential/configuration files are
 excluded by explicit filename patterns.
 It is a private experiment journal, not a qualified MeasurementReport. Serialized
 byte counts and the rate card cover **bulk chunk bodies only**, excluding digest
