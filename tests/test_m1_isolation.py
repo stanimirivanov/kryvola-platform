@@ -163,3 +163,28 @@ class ClusterMetadataOwnershipTests(unittest.TestCase):
             self.assertEqual(
                 removals, [] if fail == "create" else [["docker", "rm", "-f", "owned-container-id"]]
             )
+
+
+class MissingHelperTests(unittest.TestCase):
+    def test_missing_helper_is_safe_but_daemon_errors_are_not_ignored(self):
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+
+        from tools.m1_isolation_local import Local
+
+        adapter = Local.__new__(Local)
+        adapter.stack = SimpleNamespace(token="own-token")
+        for message in (
+            b"error: no such object: helper",
+            b"Error: No such container: helper",
+            b"permission denied",
+        ):
+            adapter.run = Mock(
+                return_value=SimpleNamespace(returncode=1, stdout=b"[]", stderr=message)
+            )
+            if message == b"permission denied":
+                with self.assertRaisesRegex(ValueError, "M1_HELPER_CLEANUP"):
+                    adapter.remove("helper")
+            else:
+                adapter.remove("helper")
+            self.assertEqual(adapter.run.call_count, 1)

@@ -261,9 +261,10 @@ class Local:
             self.remove(name)
 
     def remove(self, name):
-        result = self.run(["inspect", name], check=False)
+        result = self.run(["container", "inspect", name], check=False)
         if result.returncode:
-            if b"No such object" in result.stderr or b"No such container" in result.stderr:
+            error = result.stderr.lower()
+            if b"no such object" in error or b"no such container" in error:
                 return
             raise ValueError("M1_HELPER_CLEANUP")
         labels = json.loads(result.stdout)[0]["Config"].get("Labels") or {}
