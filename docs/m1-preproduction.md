@@ -54,8 +54,8 @@ Before instantiating these templates, a trusted operator/provisioner must supply
   and SPIRE/CSI/controller-manager infrastructure with class `m1-preproduction`,
   Kubernetes workload attestation and a read-only `agent.sock` CSI mount. No host
   UID selector is used for preproduction identity. No application SA gets API RBAC.
-- Distinct nodes for `kryvola.io/domain=owner|control|compute|data`, audited and
-  labeled `kryvola.io/core-dumps=disabled` and `kryvola.io/swap=disabled`. Disable
+- Distinct nodes for `kryvola.io.node-restriction.kubernetes.io/domain=owner|control|compute|data`, audited and
+  labeled `kryvola.io.node-restriction.kubernetes.io/core-dumps=disabled` and `kryvola.io.node-restriction.kubernetes.io/swap=disabled`. Disable
   piped host core collection; zero core limits can otherwise be ignored. Encrypt
   persistent custody/attempt storage and keep node debug/administrative access
   outside workload authority. The admission test does not attest these node facts.
@@ -77,3 +77,9 @@ Required enforcement sources: [Kubernetes restricted Pod Security](https://kuber
 [SPIFFE CSI](https://github.com/spiffe/spiffe-csi),
 [Cilium deny policies](https://docs.cilium.io/en/stable/security/policy/language/),
 and [Linux core handling](https://man7.org/linux/man-pages/man5/core.5.html).
+
+Domain/core/swap node labels use the protected NodeRestriction prefix. Operators
+must enable the Node authorizer and NodeRestriction admission plugin and assign
+these labels only after auditing nodes. The disposable API gate verifies that
+a node identity can change an ordinary own-node label but cannot forge the
+protected owner label. This does not attest the underlying physical node facts.

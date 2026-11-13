@@ -280,9 +280,9 @@ def build(images=None):
                 "automountServiceAccountToken": False,
                 "enableServiceLinks": False,
                 "nodeSelector": {
-                    "kryvola.io/domain": domain,
-                    "kryvola.io/core-dumps": "disabled",
-                    "kryvola.io/swap": "disabled",
+                    "kryvola.io.node-restriction.kubernetes.io/domain": domain,
+                    "kryvola.io.node-restriction.kubernetes.io/core-dumps": "disabled",
+                    "kryvola.io.node-restriction.kubernetes.io/swap": "disabled",
                 },
                 "securityContext": {
                     "runAsNonRoot": True,

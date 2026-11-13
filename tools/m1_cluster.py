@@ -126,6 +126,20 @@ def qualify():
     name = "m1-boundary-" + secrets.token_hex(6)
     accepted, rejected = 0, 0
     with cluster(name) as node:
+        node_user = ["--as=system:node:" + node, "--as-group=system:nodes"]
+        # Anti-vacuity: the node identity can change an ordinary own-node label.
+        kubectl(node, "label", "node", node, "kryvola.io/admission-probe=allowed", *node_user)
+        denied = kubectl(
+            node,
+            "label",
+            "node",
+            node,
+            "kryvola.io.node-restriction.kubernetes.io/domain=owner",
+            *node_user,
+            check=False,
+        )
+        if denied.returncode == 0 or b"not allowed to modify labels" not in denied.stderr:
+            raise ValueError("M1_NODE_RESTRICTION_NEGATIVE_FAILED")
         for file in ("cilium-crd.yaml", "spire-crd.yaml"):
             kubectl(node, "create", "-f", "-", payload=tool(file).read_bytes())
         for crd in ("ciliumnetworkpolicies.cilium.io", "clusterspiffeids.spire.spiffe.io"):
@@ -179,6 +193,7 @@ def qualify():
         "dataplane_qualified": False,
         "identity_qualified": False,
         "owned_cluster_removed": True,
+        "protected_node_label_denied": True,
     }
     (ROOT / "build/m1-admission-report.json").write_text(json.dumps(report, indent=2) + "\n")
     print("M1_KUBERNETES_API_ADMISSION_AND_CLEANUP_PASSED")

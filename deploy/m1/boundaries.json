@@ -458,9 +458,9 @@
           ],
           "enableServiceLinks": false,
           "nodeSelector": {
-            "kryvola.io/core-dumps": "disabled",
-            "kryvola.io/domain": "control",
-            "kryvola.io/swap": "disabled"
+            "kryvola.io.node-restriction.kubernetes.io/core-dumps": "disabled",
+            "kryvola.io.node-restriction.kubernetes.io/domain": "control",
+            "kryvola.io.node-restriction.kubernetes.io/swap": "disabled"
           },
           "securityContext": {
             "fsGroup": 2001,
@@ -803,9 +803,9 @@
           ],
           "enableServiceLinks": false,
           "nodeSelector": {
-            "kryvola.io/core-dumps": "disabled",
-            "kryvola.io/domain": "control",
-            "kryvola.io/swap": "disabled"
+            "kryvola.io.node-restriction.kubernetes.io/core-dumps": "disabled",
+            "kryvola.io.node-restriction.kubernetes.io/domain": "control",
+            "kryvola.io.node-restriction.kubernetes.io/swap": "disabled"
           },
           "securityContext": {
             "fsGroup": 2002,
@@ -1120,9 +1120,9 @@
           ],
           "enableServiceLinks": false,
           "nodeSelector": {
-            "kryvola.io/core-dumps": "disabled",
-            "kryvola.io/domain": "control",
-            "kryvola.io/swap": "disabled"
+            "kryvola.io.node-restriction.kubernetes.io/core-dumps": "disabled",
+            "kryvola.io.node-restriction.kubernetes.io/domain": "control",
+            "kryvola.io.node-restriction.kubernetes.io/swap": "disabled"
           },
           "securityContext": {
             "fsGroup": 2003,
@@ -1468,9 +1468,9 @@
           ],
           "enableServiceLinks": false,
           "nodeSelector": {
-            "kryvola.io/core-dumps": "disabled",
-            "kryvola.io/domain": "compute",
-            "kryvola.io/swap": "disabled"
+            "kryvola.io.node-restriction.kubernetes.io/core-dumps": "disabled",
+            "kryvola.io.node-restriction.kubernetes.io/domain": "compute",
+            "kryvola.io.node-restriction.kubernetes.io/swap": "disabled"
           },
           "securityContext": {
             "fsGroup": 65532,
@@ -1732,9 +1732,9 @@
           ],
           "enableServiceLinks": false,
           "nodeSelector": {
-            "kryvola.io/core-dumps": "disabled",
-            "kryvola.io/domain": "owner",
-            "kryvola.io/swap": "disabled"
+            "kryvola.io.node-restriction.kubernetes.io/core-dumps": "disabled",
+            "kryvola.io.node-restriction.kubernetes.io/domain": "owner",
+            "kryvola.io.node-restriction.kubernetes.io/swap": "disabled"
           },
           "securityContext": {
             "fsGroup": 3001,

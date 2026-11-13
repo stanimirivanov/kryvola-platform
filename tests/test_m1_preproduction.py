@@ -33,8 +33,14 @@ class PreproductionTests(unittest.TestCase):
         for pod in pods:
             spec = pod["template"]["spec"]
             self.assertFalse(spec["automountServiceAccountToken"])
-            self.assertEqual(spec["nodeSelector"]["kryvola.io/core-dumps"], "disabled")
-            self.assertEqual(spec["nodeSelector"]["kryvola.io/swap"], "disabled")
+            self.assertIn("kryvola.io.node-restriction.kubernetes.io/domain", spec["nodeSelector"])
+            self.assertEqual(
+                spec["nodeSelector"]["kryvola.io.node-restriction.kubernetes.io/core-dumps"],
+                "disabled",
+            )
+            self.assertEqual(
+                spec["nodeSelector"]["kryvola.io.node-restriction.kubernetes.io/swap"], "disabled"
+            )
             self.assertTrue(spec["securityContext"]["runAsNonRoot"])
             for container in spec["containers"]:
                 self.assertFalse(container["securityContext"]["allowPrivilegeEscalation"])

@@ -41,7 +41,8 @@ Read-only roots, dropped capabilities, seccomp, finite per-container resources,
 operator-audited, separate domain nodes labeled for disabled swap/core collection.
 A zero RLIMIT_CORE alone is insufficient with a piped host core collector; the
 profile must not schedule onto unaudited nodes. Labels attest an external node
-configuration; this PR neither changes host sysctls nor proves physical node
+configuration. NodeRestriction-protected keys prevent kubelet self-labeling;
+require the Node authorizer and NodeRestriction admission. This PR neither changes host sysctls nor proves physical node
 isolation. Owner custody uses only the owner-domain volume/keyring integration.
 
 The renderer requires three independently selected digest-pinned wrapper images;
