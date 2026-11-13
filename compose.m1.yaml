@@ -193,6 +193,12 @@
           "source": "${M1_RUN:?m1 runner required}/secrets/s3-server.json",
           "target": "/run/m1-secrets/s3-server.json",
           "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "./config/isolation/m1_master.toml",
+          "target": "/etc/seaweedfs/master.toml",
+          "read_only": true
         }
       ],
       "mem_limit": "1g"
@@ -292,7 +298,23 @@
         }
       ],
       "mem_limit": "2g",
-      "shm_size": "256m"
+      "shm_size": "256m",
+      "read_only": true,
+      "cap_drop": [
+        "ALL"
+      ],
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "tmpfs": [
+        "/tmp:rw,nosuid,nodev,size=256m"
+      ],
+      "ulimits": {
+        "core": {
+          "soft": 0,
+          "hard": 0
+        }
+      }
     },
     "runtime": {
       "image": "${M1_RUNTIME_IMAGE:?m1 runner required}",
@@ -692,7 +714,13 @@
       ],
       "security_opt": [
         "no-new-privileges:true"
-      ]
+      ],
+      "ulimits": {
+        "core": {
+          "soft": 0,
+          "hard": 0
+        }
+      }
     },
     "s3-client": {
       "image": "${M1_S3_CLIENT_IMAGE:?m1 runner required}",

@@ -61,7 +61,7 @@ def command(*args):
 
 
 @contextmanager
-def cluster(name):
+def cluster(name, *, configuration=None):
     if not re.fullmatch("m1-boundary-[a-f0-9]{12}", name):
         raise ValueError("M1_CLUSTER_NAME")
     if name in command("get", "clusters").decode().split():
@@ -73,6 +73,11 @@ def cluster(name):
         owner = {"cluster": name, "token": secrets.token_hex(24)}
         marker.write_text(json.dumps(owner))
         kubeconfig = Path(directory) / "kubeconfig"
+        extra = []
+        if configuration is not None:
+            config = Path(directory) / "kind.json"
+            config.write_text(json.dumps(configuration))
+            extra = ["--config", str(config)]
         try:
             command(
                 "create",
@@ -84,7 +89,10 @@ def cluster(name):
                 "--kubeconfig",
                 kubeconfig,
                 "--wait",
-                "120s",
+                "0s"
+                if configuration and configuration.get("networking", {}).get("disableDefaultCNI")
+                else "120s",
+                *extra,
             )
             yield name + "-control-plane"
         finally:
@@ -93,7 +101,7 @@ def cluster(name):
             command("delete", "cluster", "--name", name, "--kubeconfig", kubeconfig)
 
 
-def kubectl(node, *args, payload=None, check=True):
+def kubectl(node, *args, payload=None, check=True, timeout=120):
     return subprocess.run(
         [
             "docker",
@@ -108,11 +116,11 @@ def kubectl(node, *args, payload=None, check=True):
         input=payload,
         capture_output=True,
         check=check,
-        timeout=120,
+        timeout=timeout,
     )
 
 
-def qualify():
+def local_only():
     # A local Docker-only fixture; never consult or apply to the user's kubeconfig.
     endpoint = os.environ.get("DOCKER_HOST")
     if not endpoint:
@@ -120,6 +128,10 @@ def qualify():
         endpoint = context[0]["Endpoints"]["docker"]["Host"]
     if not endpoint.startswith("unix://"):
         raise ValueError("M1_LOCAL_CLUSTER_ONLY")
+
+
+def qualify():
+    local_only()
     profile.validate(json.loads(profile.MANIFEST.read_bytes()))
     image = m1_assets.load()["services"]["python"]
     document = profile.build({role: image for role in ("runtime", "ray", "owner")})

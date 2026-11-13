@@ -77,6 +77,8 @@ def main() -> None:
             )
             run(sys.executable, "tools/m1.py", "ci")
             run(sys.executable, "tools/m1_cluster.py", "ci")
+            run(sys.executable, "tools/m1_isolation_local.py")
+            run(sys.executable, "tools/m1_isolation_cluster.py")
 
 
 if __name__ == "__main__":

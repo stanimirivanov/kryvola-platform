@@ -12,7 +12,12 @@ conformance = [
 ]
 
 [dependency-groups]
-dev = ["ruff==0.17.2", "ty==0.0.91", "hatchling==1.32.4"]
+dev = [
+    "ruff==0.17.2",
+    "ty==0.0.91",
+    "hatchling==1.32.4",
+    "pyyaml==6.0.3",
+]
 
 [tool.uv]
 required-version = "==0.12.5"
@@ -31,6 +36,7 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.per-file-target-version]
 "config/isolation/probe.py" = "py312"
+"config/isolation/m1_probe.py" = "py312"
 "config/m1/engine_fixture.py" = "py312"
 
 [tool.ty.environment]

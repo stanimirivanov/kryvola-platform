@@ -1,0 +1,39 @@
+{
+  "charts": {
+    "cilium": {
+      "sha256": "505abff8385811df1a949776fc42e9f10697989a332acc86d6e8933efcb855ed",
+      "url": "https://helm.cilium.io/cilium-1.20.4.tgz"
+    },
+    "spire": {
+      "sha256": "a0a442d8b03fa9b7ba733326700e64a6184a466a84ae5a07eda4332a0afd69ae",
+      "url": "https://github.com/spiffe/helm-charts-hardened/releases/download/spire-0.30.4/spire-0.30.4.tgz"
+    }
+  },
+  "crds": {
+    "clusterfederatedtrustdomains.yaml": {
+      "sha256": "27c8192cf0c23e138eb1105653fdcd59c85c2cc36e14bc7c9b51bc0b3763f9c6",
+      "url": "https://raw.githubusercontent.com/spiffe/spire-controller-manager/v0.8.0/config/crd/bases/spire.spiffe.io_clusterfederatedtrustdomains.yaml"
+    },
+    "clusterspiffeids.yaml": {
+      "sha256": "f35a66a3b1dedb2793c465f03502df05035d4fb243a7d1313c5cf7dfbe3af2fd",
+      "url": "https://raw.githubusercontent.com/spiffe/spire-controller-manager/v0.8.0/config/crd/bases/spire.spiffe.io_clusterspiffeids.yaml"
+    },
+    "clusterstaticentries.yaml": {
+      "sha256": "d563d9e9442cdccf3cda23ff970e56431a32fe152a0f0783cd550b76fe05d2c2",
+      "url": "https://raw.githubusercontent.com/spiffe/spire-controller-manager/v0.8.0/config/crd/bases/spire.spiffe.io_clusterstaticentries.yaml"
+    }
+  },
+  "helm": {
+    "binary_sha256": "876242ea89b1fc07692e179d9abdc47028979fb64b20d85448e85193c8b04931",
+    "sha256": "d1c0278d46beab79582d7e50f5b3dc206944ba8e577cde618513fd07daa53983",
+    "url": "https://get.helm.sh/helm-v4.3.2-linux-amd64.tar.gz"
+  },
+  "images": {
+    "busybox:1.37.0-uclibc": "busybox@sha256:7aa3d3c53cc1ed823c6a5967ebaac87700a5b0766af45ff599dbca3506c8b072",
+    "ghcr.io/spiffe/spiffe-csi-driver:0.2.7": "ghcr.io/spiffe/spiffe-csi-driver@sha256:9dfe4f0caff096164fd921aa7f15319804df2fc0325f1d90bc793ef3256ab1cd",
+    "ghcr.io/spiffe/spire-agent:1.16.0": "ghcr.io/spiffe/spire-agent@sha256:ab3a8ce70435374cc5d84c81eabf0278dc046ddbc0a736d59694ba9e5975b1b6",
+    "ghcr.io/spiffe/spire-controller-manager:0.8.0": "ghcr.io/spiffe/spire-controller-manager@sha256:19e418e9d7f23fe82cbabccdc3e71861590f69a1fa8451bfdb267d7371b2b73e",
+    "ghcr.io/spiffe/spire-server:1.16.0": "ghcr.io/spiffe/spire-server@sha256:ff546f4c62dafc479a0cd79eae9a7b6df2975754d75efd31706098e0d7548837",
+    "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0": "registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:11f199f6bec47403b03cb49c79a41f445884b213b382582a60710b8c6fdc316a"
+  }
+}

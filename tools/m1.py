@@ -80,7 +80,15 @@ def check():
         for mount in service.get("volumes", []):
             source = mount["source"] if isinstance(mount, dict) else mount.split(":")[0]
             assets.require(
-                source in {"postgres", "storage", "broker", "execution", "owner"}
+                source
+                in {
+                    "postgres",
+                    "storage",
+                    "broker",
+                    "execution",
+                    "owner",
+                    "./config/isolation/m1_master.toml",
+                }
                 or source
                 in {
                     "./config/m1/" + f
@@ -100,6 +108,28 @@ def check():
     for name in ("ray", "engine"):
         service = config["services"][name]
         assets.require(service["user"] == "65532:65532", "M1_COMPOSITION_REJECTED")
+        assets.require(
+            service.get("read_only") is True
+            and service.get("cap_drop") == ["ALL"]
+            and service.get("security_opt") == ["no-new-privileges:true"]
+            and service.get("ulimits", {}).get("core") == {"soft": 0, "hard": 0},
+            "M1_COMPOSITION_REJECTED",
+        )
+        sources = {
+            mount["source"] if isinstance(mount, dict) else mount.split(":")[0]
+            for mount in service["volumes"]
+        }
+        allowed = {
+            "execution",
+            "./config/m1/engine_fixture.py"
+            if name == "ray"
+            else "${M1_SOCKET:?m1 runner required}",
+        }
+        assets.require(
+            sources == allowed
+            and service["networks"] == (["compute"] if name == "ray" else ["control", "compute"]),
+            "M1_COMPOSITION_REJECTED",
+        )
         serialized = json.dumps(service)
         assets.require(
             not any(

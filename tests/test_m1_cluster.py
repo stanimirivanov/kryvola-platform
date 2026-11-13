@@ -33,6 +33,31 @@ class ClusterTests(unittest.TestCase):
             self.assertEqual(commands[-1][:2], ("delete", "cluster"))
             self.assertIn("m1-boundary-0123456789ab", commands[-1])
 
+    def test_live_configuration_is_owned_and_passed_to_kind(self):
+        import json
+        from pathlib import Path
+
+        from tools import m1_cluster as c
+
+        configuration = {
+            "kind": "Cluster",
+            "apiVersion": "kind.x-k8s.io/v1alpha4",
+            "networking": {"disableDefaultCNI": True},
+            "nodes": [{"role": "control-plane"}, {"role": "worker"}],
+        }
+        commands = []
+
+        def run(*args):
+            commands.append(args)
+            return b""
+
+        with patch.object(c, "command", side_effect=run):
+            with c.cluster("m1-boundary-0123456789ab", configuration=configuration):
+                created = next(args for args in commands if args[:2] == ("create", "cluster"))
+                path = Path(created[created.index("--config") + 1])
+                self.assertEqual(json.loads(path.read_bytes()), configuration)
+            self.assertFalse(path.exists())
+
     def test_arbitrary_names_are_rejected_before_any_cli(self):
         from tools import m1_cluster as c
 
