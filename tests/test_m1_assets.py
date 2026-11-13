@@ -85,6 +85,18 @@ def fixture(root):
 
 
 class M1AssetTests(unittest.TestCase):
+    def test_unlisted_wheel_cannot_reach_signature_or_image_assembly(self):
+        from tools import m1_assets
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            locked = fixture(root)
+            (root / "ml/unlisted.whl").write_bytes(b"unverified package")
+            verifier = Mock()
+            with self.assertRaisesRegex(ValueError, "M1_ASSET_CHANGED"):
+                m1_assets.verify(locked, root, verifier=verifier)
+            verifier.assert_not_called()
+
     def test_lock_requires_all_m1_components_and_immutable_service_images(self):
         from tools import m1_assets
 

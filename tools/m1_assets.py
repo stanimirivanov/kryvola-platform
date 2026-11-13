@@ -163,6 +163,9 @@ def publisher(folder, component):
 def verify(locked, root=OUTPUT, *, verifier=publisher):
     # Complete integrity pass before any verifier or released program can run.
     for role, item in locked["components"].items():
+        folder = root / role
+        require(folder.is_dir() and not folder.is_symlink(), "M1_ASSET_CHANGED")
+        require({path.name for path in folder.iterdir()} == set(item["assets"]), "M1_ASSET_CHANGED")
         for name, asset in item["assets"].items():
             require(sha(root / role / name) == asset["sha256"], "M1_ASSET_CHANGED")
     manifests = {}
