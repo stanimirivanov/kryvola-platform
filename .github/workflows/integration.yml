@@ -27,6 +27,8 @@ jobs:
       - run: uv run --locked python tools/workflow_assets.py install
       - run: uv sync --locked --extra conformance
       - run: uv run --locked --extra conformance python tools/verify.py full
+        env:
+          KRYVOLA_M1_SEPARATE_JOB: "1"
       - run: uv run --locked python -m kryvola_platform config/foundation.json
       - uses: actions/upload-artifact@v4
         if: always()
@@ -42,5 +44,27 @@ jobs:
             build/m0/*/lock.json
             build/m0/*/report.json
             build/m0/*/manifest.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+  m1:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.12.5"
+      - run: uv sync --locked
+      - run: uv run --locked python tools/install_release.py
+      - run: uv run --locked python tools/m1.py install
+      - run: uv run --locked python tools/m1.py ci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m1-public-startup-observations
+          path: build/m1-report.json
           if-no-files-found: ignore
           retention-days: 7

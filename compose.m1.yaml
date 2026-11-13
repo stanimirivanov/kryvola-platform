@@ -1,0 +1,782 @@
+{
+  "services": {
+    "postgres": {
+      "image": "${M1_POSTGRES_IMAGE:?m1 runner required}",
+      "platform": "linux/amd64",
+      "networks": [
+        "control"
+      ],
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      },
+      "environment": {
+        "POSTGRES_USER": "m1_admin",
+        "POSTGRES_PASSWORD_FILE": "/run/m1-secrets/pg-admin"
+      },
+      "volumes": [
+        "postgres:/var/lib/postgresql/data",
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/pg-admin",
+          "target": "/run/m1-secrets/pg-admin",
+          "read_only": true
+        }
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "pg_isready",
+          "-U",
+          "m1_admin"
+        ],
+        "interval": "3s",
+        "timeout": "10s",
+        "retries": 90
+      },
+      "mem_limit": "512m"
+    },
+    "schema": {
+      "image": "${M1_TEMPORAL_CLI_IMAGE:?m1 runner required}",
+      "platform": "linux/amd64",
+      "networks": [
+        "control"
+      ],
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      },
+      "entrypoint": [
+        "sh",
+        "/opt/m1/schema.sh"
+      ],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "./config/m1/schema.sh",
+          "target": "/opt/m1/schema.sh",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/pg-temporal",
+          "target": "/run/m1-secrets/pg-temporal",
+          "read_only": true
+        }
+      ],
+      "depends_on": {
+        "postgres": {
+          "condition": "service_healthy"
+        },
+        "db-init": {
+          "condition": "service_completed_successfully"
+        }
+      },
+      "mem_limit": "256m"
+    },
+    "db-init": {
+      "image": "${M1_POSTGRES_IMAGE:?m1 runner required}",
+      "platform": "linux/amd64",
+      "networks": [
+        "control"
+      ],
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      },
+      "entrypoint": [
+        "sh",
+        "/run/m1-secrets/init-db.sh"
+      ],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/init-db.sh",
+          "target": "/run/m1-secrets/init-db.sh",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/pg-admin",
+          "target": "/run/m1-secrets/pg-admin",
+          "read_only": true
+        }
+      ],
+      "depends_on": {
+        "postgres": {
+          "condition": "service_healthy"
+        }
+      },
+      "mem_limit": "128m"
+    },
+    "temporal": {
+      "image": "${M1_TEMPORAL_IMAGE:?m1 runner required}",
+      "platform": "linux/amd64",
+      "networks": [
+        "control"
+      ],
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      },
+      "environment": {
+        "DB": "postgres12",
+        "DB_PORT": "5432",
+        "POSTGRES_USER": "m1_temporal",
+        "POSTGRES_PWD": "${M1_TEMPORAL_PASSWORD:?m1 runner required}",
+        "POSTGRES_SEEDS": "postgres",
+        "BIND_ON_IP": "0.0.0.0",
+        "DYNAMIC_CONFIG_FILE_PATH": "/etc/temporal/fixture.yaml"
+      },
+      "depends_on": {
+        "schema": {
+          "condition": "service_completed_successfully"
+        }
+      },
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "nc",
+          "-z",
+          "localhost",
+          "7233"
+        ],
+        "interval": "3s",
+        "timeout": "10s",
+        "retries": 90
+      },
+      "mem_limit": "1g",
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "./config/m1/dynamicconfig.yaml",
+          "target": "/etc/temporal/fixture.yaml",
+          "read_only": true
+        }
+      ]
+    },
+    "temporal-cli": {
+      "image": "${M1_TEMPORAL_CLI_IMAGE:?m1 runner required}",
+      "platform": "linux/amd64",
+      "networks": [
+        "control"
+      ],
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      },
+      "entrypoint": [
+        "sleep",
+        "infinity"
+      ],
+      "mem_limit": "192m"
+    },
+    "storage": {
+      "image": "${M1_S3_IMAGE:?m1 runner required}",
+      "platform": "linux/amd64",
+      "networks": [
+        "data"
+      ],
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      },
+      "command": [
+        "server",
+        "-dir=/data",
+        "-ip=storage",
+        "-ip.bind=0.0.0.0",
+        "-filer",
+        "-s3",
+        "-s3.config=/run/m1-secrets/s3-server.json",
+        "-volume.max=2",
+        "-master.volumeSizeLimitMB=32"
+      ],
+      "volumes": [
+        "storage:/data",
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/s3-server.json",
+          "target": "/run/m1-secrets/s3-server.json",
+          "read_only": true
+        }
+      ],
+      "mem_limit": "1g"
+    },
+    "broker": {
+      "image": "${M1_REDPANDA_IMAGE:?m1 runner required}",
+      "platform": "linux/amd64",
+      "networks": [
+        "data"
+      ],
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      },
+      "volumes": [
+        "broker:/var/lib/redpanda/data",
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/broker.json",
+          "target": "/run/m1-secrets/broker.json",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/broker.crt",
+          "target": "/run/m1-secrets/broker.crt",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/broker.key",
+          "target": "/run/m1-secrets/broker.key",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/ca.crt",
+          "target": "/run/m1-secrets/ca.crt",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/admin.crt",
+          "target": "/run/m1-secrets/admin.crt",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/admin.key",
+          "target": "/run/m1-secrets/admin.key",
+          "read_only": true
+        }
+      ],
+      "mem_limit": "1g",
+      "entrypoint": [
+        "sh",
+        "-c",
+        "cp /run/m1-secrets/broker.json /tmp/broker.yaml; exec rpk redpanda start --config /tmp/broker.yaml --mode dev-container --smp 1 --memory 512M --reserve-memory 0M"
+      ]
+    },
+    "ray": {
+      "image": "${M1_RAY_IMAGE:?m1 runner required}",
+      "platform": "linux/amd64",
+      "networks": [
+        "compute"
+      ],
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      },
+      "user": "65532:65532",
+      "environment": {
+        "HOME": "/tmp",
+        "USER": "m1-compute",
+        "RAY_USAGE_STATS_ENABLED": "0"
+      },
+      "entrypoint": [
+        "ray"
+      ],
+      "command": [
+        "start",
+        "--head",
+        "--port=6379",
+        "--include-dashboard=true",
+        "--dashboard-host=0.0.0.0",
+        "--dashboard-port=8265",
+        "--num-cpus=1",
+        "--object-store-memory=100000000",
+        "--disable-usage-stats",
+        "--block"
+      ],
+      "volumes": [
+        "execution:/run/execution",
+        {
+          "type": "bind",
+          "source": "./config/m1/engine_fixture.py",
+          "target": "/opt/m1/engine_fixture.py",
+          "read_only": true
+        }
+      ],
+      "mem_limit": "2g",
+      "shm_size": "256m"
+    },
+    "runtime": {
+      "image": "${M1_RUNTIME_IMAGE:?m1 runner required}",
+      "platform": "linux/amd64",
+      "networks": [
+        "control",
+        "data"
+      ],
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      },
+      "user": "2001:2001",
+      "entrypoint": [
+        "python",
+        "/opt/m1/service.py",
+        "runtime"
+      ],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "./config/m1/service.py",
+          "target": "/opt/m1/service.py",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_SOCKET:?m1 runner required}",
+          "target": "/run/workload",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/runtime-state",
+          "target": "/run/m1-state"
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/database",
+          "target": "/run/m1-secrets/database",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/s3.json",
+          "target": "/run/m1-secrets/s3.json",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/policy.json",
+          "target": "/run/m1-secrets/policy.json",
+          "read_only": true
+        }
+      ],
+      "depends_on": {
+        "db-init": {
+          "condition": "service_completed_successfully"
+        }
+      },
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "python",
+          "/opt/m1/service.py",
+          "probe",
+          "runtime"
+        ],
+        "interval": "3s",
+        "timeout": "10s",
+        "retries": 90
+      },
+      "mem_limit": "1g",
+      "read_only": true,
+      "tmpfs": [
+        "/tmp"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
+    },
+    "messaging": {
+      "image": "${M1_RUNTIME_IMAGE:?m1 runner required}",
+      "platform": "linux/amd64",
+      "networks": [
+        "control",
+        "data"
+      ],
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      },
+      "user": "2001:2001",
+      "entrypoint": [
+        "/opt/fabric/bin/fabric-runtime",
+        "--messaging",
+        "/run/m1-secrets/database-events",
+        "/run/m1-secrets/kafka.json"
+      ],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/database-events",
+          "target": "/run/m1-secrets/database-events",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/kafka.json",
+          "target": "/run/m1-secrets/kafka.json",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/ca.crt",
+          "target": "/run/m1-secrets/ca.crt",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/events.crt",
+          "target": "/run/m1-secrets/events.crt",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/events.key",
+          "target": "/run/m1-secrets/events.key",
+          "read_only": true
+        }
+      ],
+      "depends_on": {
+        "runtime": {
+          "condition": "service_healthy"
+        }
+      },
+      "mem_limit": "512m",
+      "read_only": true,
+      "tmpfs": [
+        "/tmp"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
+    },
+    "workflow": {
+      "image": "${M1_RUNTIME_IMAGE:?m1 runner required}",
+      "platform": "linux/amd64",
+      "networks": [
+        "control",
+        "compute"
+      ],
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      },
+      "user": "2002:2002",
+      "entrypoint": [
+        "python",
+        "/opt/m1/service.py",
+        "workflow"
+      ],
+      "environment": {
+        "M1_TASK_QUEUE": "${M1_PROJECT:?m1 runner required}"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "./config/m1/service.py",
+          "target": "/opt/m1/service.py",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_SOCKET:?m1 runner required}",
+          "target": "/run/workload",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/workflow-state",
+          "target": "/run/m1-state"
+        },
+        "execution:/run/compute:ro",
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/database-release",
+          "target": "/run/m1-secrets/database-release",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/release.json",
+          "target": "/run/m1-secrets/release.json",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/tokens.json",
+          "target": "/run/m1-secrets/tokens.json",
+          "read_only": true
+        }
+      ],
+      "depends_on": {
+        "runtime": {
+          "condition": "service_healthy"
+        },
+        "temporal": {
+          "condition": "service_healthy"
+        }
+      },
+      "mem_limit": "512m",
+      "read_only": true,
+      "tmpfs": [
+        "/tmp"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
+    },
+    "owner-init": {
+      "image": "${M1_OWNER_IMAGE:?m1 runner required}",
+      "platform": "linux/amd64",
+      "networks": [
+        "owner"
+      ],
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      },
+      "user": "0:0",
+      "entrypoint": [
+        "python",
+        "-c",
+        "import os;os.chmod('/owner',0o700);os.chown('/owner',3001,3001)"
+      ],
+      "volumes": [
+        "owner:/owner"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "cap_add": [
+        "CHOWN"
+      ]
+    },
+    "owner": {
+      "image": "${M1_OWNER_IMAGE:?m1 runner required}",
+      "platform": "linux/amd64",
+      "networks": [
+        "owner",
+        "control"
+      ],
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      },
+      "user": "3001:3001",
+      "entrypoint": [
+        "python",
+        "/opt/m1/service.py",
+        "owner"
+      ],
+      "volumes": [
+        "owner:/owner",
+        {
+          "type": "bind",
+          "source": "./config/m1/service.py",
+          "target": "/opt/m1/service.py",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_SOCKET:?m1 runner required}",
+          "target": "/run/workload",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/owner-state",
+          "target": "/run/m1-state"
+        }
+      ],
+      "depends_on": {
+        "owner-init": {
+          "condition": "service_completed_successfully"
+        }
+      },
+      "mem_limit": "256m",
+      "read_only": true,
+      "tmpfs": [
+        "/tmp"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
+    },
+    "engine-init": {
+      "image": "${M1_RUNTIME_IMAGE:?m1 runner required}",
+      "platform": "linux/amd64",
+      "networks": [
+        "control"
+      ],
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      },
+      "user": "0:0",
+      "entrypoint": [
+        "python",
+        "/opt/m1/engine_fixture.py",
+        "prepare"
+      ],
+      "environment": {
+        "M1_ENGINE_DIGEST": "${M1_ENGINE_DIGEST:?m1 runner required}"
+      },
+      "volumes": [
+        "execution:/run/execution",
+        {
+          "type": "bind",
+          "source": "./config/m1/engine_fixture.py",
+          "target": "/opt/m1/engine_fixture.py",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "${M1_CONTEXT:?m1 runner required}/execute-fixture.json",
+          "target": "/opt/m1/execute-fixture.json",
+          "read_only": true
+        }
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "cap_add": [
+        "CHOWN"
+      ],
+      "depends_on": {
+        "runtime": {
+          "condition": "service_healthy"
+        }
+      }
+    },
+    "engine": {
+      "image": "${M1_ENGINE_IMAGE:?m1 runner required}",
+      "platform": "linux/amd64",
+      "networks": [
+        "control",
+        "compute"
+      ],
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      },
+      "user": "65532:65532",
+      "entrypoint": [
+        "/opt/kryvola/kryvola-cpu-engine",
+        "/run/execution"
+      ],
+      "volumes": [
+        "execution:/run/execution",
+        {
+          "type": "bind",
+          "source": "${M1_SOCKET:?m1 runner required}",
+          "target": "/run/workload",
+          "read_only": true
+        }
+      ],
+      "depends_on": {
+        "engine-init": {
+          "condition": "service_completed_successfully"
+        }
+      },
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "python3",
+          "-c",
+          "from pathlib import Path;assert Path('/run/execution/engine.sock').is_socket()"
+        ],
+        "interval": "3s",
+        "timeout": "10s",
+        "retries": 90
+      },
+      "mem_limit": "512m",
+      "read_only": true,
+      "tmpfs": [
+        "/tmp"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
+    },
+    "s3-client": {
+      "image": "${M1_S3_CLIENT_IMAGE:?m1 runner required}",
+      "platform": "linux/amd64",
+      "networks": [
+        "data"
+      ],
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      },
+      "entrypoint": [
+        "sleep",
+        "infinity"
+      ],
+      "environment": {
+        "AWS_SHARED_CREDENTIALS_FILE": "/run/m1-secrets/aws",
+        "AWS_DEFAULT_REGION": "us-east-1",
+        "AWS_EC2_METADATA_DISABLED": "true",
+        "AWS_REQUEST_CHECKSUM_CALCULATION": "when_required",
+        "AWS_RESPONSE_CHECKSUM_VALIDATION": "when_required",
+        "AWS_MAX_ATTEMPTS": "1"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "${M1_RUN:?m1 runner required}/secrets/aws",
+          "target": "/run/m1-secrets/aws",
+          "read_only": true
+        }
+      ],
+      "mem_limit": "256m"
+    }
+  },
+  "networks": {
+    "control": {
+      "internal": true,
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      }
+    },
+    "data": {
+      "internal": true,
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      }
+    },
+    "compute": {
+      "internal": true,
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      }
+    },
+    "owner": {
+      "internal": true,
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      }
+    }
+  },
+  "volumes": {
+    "postgres": {
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      }
+    },
+    "storage": {
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      }
+    },
+    "broker": {
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      }
+    },
+    "execution": {
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      }
+    },
+    "owner": {
+      "labels": {
+        "io.kryvola.m1.invocation": "${M1_TOKEN:?m1 runner required}"
+      }
+    }
+  }
+}

@@ -20,7 +20,7 @@ def fixture(root):
         "native_artifact_root": "contracts/native",
         "native_manifest_sha256": "2" * 64,
     }
-    components = {}
+    components: dict = {}
     for role in ("fabric", "engines", "ml"):
         folder = root / role
         folder.mkdir()
@@ -54,7 +54,16 @@ def fixture(root):
         "components": components,
         "services": {
             name: name + "@sha256:" + "d" * 64
-            for name in ("postgres", "s3", "redpanda", "temporal", "temporal-cli", "ray", "python")
+            for name in (
+                "postgres",
+                "s3",
+                "redpanda",
+                "temporal",
+                "temporal-cli",
+                "ray",
+                "python",
+                "s3-client",
+            )
         },
         "permissions": {
             "profile": "OWNER_APPROVED_DEVELOPMENT_ONLY",

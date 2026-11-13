@@ -247,6 +247,7 @@
     "ray": "rayproject/ray@sha256:e93e502244bf8c0ecf8c633099f7819d7c973d76eded8e32617e1fb66725da02",
     "redpanda": "docker.redpanda.com/redpandadata/redpanda@sha256:a9dffb84f388a7a2d4ab1aaa541cd0b9a484f0f5c9b72cb54c551953352769ec",
     "s3": "chrislusf/seaweedfs@sha256:3a522c379599e163433a636e75022630848b63a74f08ea37bf06f8d776e9a707",
+    "s3-client": "amazon/aws-cli@sha256:0c240be22c3ce600499ec36429bbdd758c86b10ac3e34f2c6e17698816b5f04a",
     "temporal": "temporalio/server@sha256:2695f2564ec51aa84232bf3fa59b31e2cce99bec437a64f5bc487cbe21b2de0e",
     "temporal-cli": "temporalio/admin-tools@sha256:4fdaf9122f8beb448c823976232f6616a8cd94687f6984eeaf25c2b1457d5fed"
   }

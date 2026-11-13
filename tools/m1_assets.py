@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LOCK = ROOT / "config/m1.lock.json"
 OUTPUT = ROOT / "build/m1-assets"
 ROLES = {"fabric", "engines", "ml"}
-SERVICES = {"postgres", "s3", "redpanda", "temporal", "temporal-cli", "ray", "python"}
+SERVICES = {"postgres", "s3", "redpanda", "temporal", "temporal-cli", "ray", "python", "s3-client"}
 SPEC_FIELDS = {
     "repository",
     "revision",

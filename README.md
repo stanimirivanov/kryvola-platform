@@ -86,3 +86,11 @@ provision nothing. Research evidence remains inconclusive for production latency
 
 [Experimental driver publication](docs/publication.md) describes the wheel/archive
 layout, qualification, manual publishing and independent signature verification.
+
+## M1 local composition
+
+[Locked M1 services](docs/m1-composition.md) use a separate signed release lock,
+real runtime roles and owned local cleanup. `tools/m1.py check` is offline;
+`tools/m1.py ci` is the real startup/migration gate. Follow the documented explicit
+asset/tool installation first. This does not qualify successful inference or
+change frozen M0 acceptance.
