@@ -247,7 +247,7 @@ def signing_key(signer):
 
 
 class OwnerSession:
-    def __init__(self, stack, engine):
+    def __init__(self, stack, engine, *, recovery=False):
         self.log = (stack.folder / "owner-session.log").open("xb")
         os.chmod(self.log.name, 0o600)
         container = stack.compose("ps", "-q", "owner").decode().strip()
@@ -264,6 +264,7 @@ class OwnerSession:
                 "-c",
                 source,
                 engine,
+                *(["recovery"] if recovery else []),
             ],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,

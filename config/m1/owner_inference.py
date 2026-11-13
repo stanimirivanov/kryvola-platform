@@ -259,6 +259,7 @@ def main():
     if ctypes.CDLL(None).prctl(4, 0, 0, 0, 0) != 0:
         raise ValueError("M1_OWNER_PROCESS_PROTECTION")
     VALUES = tuple(secrets.choice((0, 1, 2, 7, 15, 63, 127, 128, 254, 255)) for _ in range(2))
+    SECRET_MARKERS.extend([canonical(list(VALUES)), json.dumps(list(VALUES)).encode()])
     prepared, state, descriptor = prepare(sys.argv[1])
     if sys.argv[2:] == ["prepare"]:
         return
@@ -282,10 +283,20 @@ def main():
     client = client_sdk.Client(
         "runtime", 8443, service.tls("owner"), "spiffe://m1.test/runtime", credential
     )
-    admitted = sdk.submit(client, prepared)
+    try:
+        admitted = sdk.submit(client, prepared)
+    except client_sdk.SubmissionError:
+        if sys.argv[2:] != ["recovery"]:
+            raise
+        emit({"stage": "REJECTED", "code": "SUBMISSION_REJECTED"})
+        audit()
+        return
     emit({"stage": "ADMITTED", "response": admitted})
     # The operator supplies only committed public release documents after the real workflow.
     released = receive()
+    if released == {"audit_only": True} and sys.argv[2:] == ["recovery"]:
+        audit()
+        return
     for suffix in ("release", "release-signature", "open-policy"):
         write(suffix, released[suffix])
     svid = json.loads(
@@ -351,6 +362,10 @@ def main():
         }
     )
 
+    audit()
+
+
+def audit():
     # Inspect actual service logs inside the owner domain: wrapping/signing keys
     # and the plaintext witness never become scanner inputs outside this UID.
     def clean(raw):
