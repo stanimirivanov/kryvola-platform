@@ -7,6 +7,7 @@ import os
 import socket
 import subprocess
 import tarfile
+import tempfile
 import time
 import urllib.request
 from contextlib import contextmanager
@@ -50,12 +51,19 @@ def install():
 
 @contextmanager
 def identity(folder, socket_folder):
+    # Linux AF_UNIX pathnames are limited to 107 bytes. Hosted checkout paths
+    # exceed that limit; keep the admin socket short and private (mode 0700),
+    # separate from the public workload socket and the owned persistent state.
+    with tempfile.TemporaryDirectory(prefix="m1-spire-", dir="/tmp") as sockets:
+        yield from _identity(folder, socket_folder, Path(sockets) / "server.sock")
+
+
+def _identity(folder, socket_folder, server_socket):
     # Based on SPIRE's join-token bootstrap and unix WorkloadAttestor pattern.
     # The host agent can inspect container peer PIDs without privileged workloads.
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         port = sock.getsockname()[1]
-    server_socket = folder / "server.sock"
     agent_socket = socket_folder / "agent.sock"
     (folder / "server.conf").write_text(f'''
 server {{ bind_address = "127.0.0.1" bind_port = {port} trust_domain = "m1.test"

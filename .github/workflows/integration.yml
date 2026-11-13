@@ -60,6 +60,7 @@ jobs:
       - run: uv sync --locked
       - run: uv run --locked python tools/install_release.py
       - run: uv run --locked python tools/m1.py install
+      - run: uv run --locked python -m unittest discover -s tests -p live_m1_identity.py -v
       - run: uv run --locked python tools/m1.py ci
       - uses: actions/upload-artifact@v4
         if: always()

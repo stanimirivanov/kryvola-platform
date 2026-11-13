@@ -63,6 +63,17 @@ def main() -> None:
             run("uv", "build", "--no-build-isolation", "--wheel")
         run(sys.executable, "tools/integration.py", "ci")
         if os.environ.get("KRYVOLA_M1_SEPARATE_JOB") != "1":
+            run(
+                sys.executable,
+                "-m",
+                "unittest",
+                "discover",
+                "-s",
+                "tests",
+                "-p",
+                "live_m1_identity.py",
+                "-v",
+            )
             run(sys.executable, "tools/m1.py", "ci")
 
 

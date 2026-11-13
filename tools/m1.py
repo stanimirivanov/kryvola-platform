@@ -206,7 +206,9 @@ class Stack:
         identity = self.folder / "identity"
         identity.mkdir(mode=0o700)
         socket_folder = Path(
-            self.resources.enter_context(tempfile.TemporaryDirectory(prefix="m1-workload-"))
+            self.resources.enter_context(
+                tempfile.TemporaryDirectory(prefix="m1-workload-", dir="/tmp")
+            )
         )
         socket_folder.chmod(0o755)
         self.resources.enter_context(m1_identity.identity(identity, socket_folder))

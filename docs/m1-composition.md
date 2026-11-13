@@ -16,6 +16,7 @@ uv sync --locked
 uv run --locked python tools/install_release.py
 uv run --locked python tools/m1.py install
 uv run --locked python tools/m1.py check
+uv run --locked python -m unittest discover -s tests -p live_m1_identity.py -v
 uv run --locked python tools/m1.py ci
 # Optional foreground session; Ctrl-C performs the same owned cleanup:
 uv run --locked python tools/m1.py up
@@ -56,3 +57,9 @@ belongs to the later end-to-end qualification. Its ready state does not assert
 recoverable custody or successful opening. Similarly the startup Engine assignment
 has no usable input/output credentials. The full M1 milestone and production
 qualification remain incomplete after this task.
+
+SPIRE admin and workload sockets use separate short directories under `/tmp`,
+independent of checkout depth and `TMPDIR`. The admin directory stays mode 0700;
+only the workload directory is mounted into roles. Keys and database state stay
+in the private owned invocation folder. The real long-path identity regression
+checks attestation and process/socket cleanup on normal and exceptional exits.
