@@ -90,8 +90,7 @@ class DatabaseReadinessTests(unittest.TestCase):
                 return b"accepting connections"
             return b"1"  # the initial Unix socket already answers SQL
 
-        adapter.execute = execute
-        with patch.object(m.time, "sleep"):
+        with patch.object(adapter, "execute", side_effect=execute), patch.object(m.time, "sleep"):
             adapter.wait_database()
         self.assertEqual(phase[0], "final")
         self.assertEqual(len(calls), 2)
