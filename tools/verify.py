@@ -26,6 +26,7 @@ def main() -> None:
     run("ty", "check")
     run(sys.executable, "tools/architecture.py")
     run(sys.executable, "tools/integration.py", "check")
+    run(sys.executable, "tools/m1.py", "check")
     run(sys.executable, "tools/workflow_assets.py", "check")
     run(sys.executable, "tools/release_conformance.py", "check")
     run(sys.executable, "tools/m0_acceptance.py", "--check")
@@ -61,6 +62,19 @@ def main() -> None:
         else:
             run("uv", "build", "--no-build-isolation", "--wheel")
         run(sys.executable, "tools/integration.py", "ci")
+        if os.environ.get("KRYVOLA_M1_SEPARATE_JOB") != "1":
+            run(
+                sys.executable,
+                "-m",
+                "unittest",
+                "discover",
+                "-s",
+                "tests",
+                "-p",
+                "live_m1_identity.py",
+                "-v",
+            )
+            run(sys.executable, "tools/m1.py", "ci")
 
 
 if __name__ == "__main__":

@@ -336,3 +336,35 @@ evidence verified with this fix: owner_approved=true and eligibility for M0
 ratification, while M0/M1 acceptance, production and deployment remain false.
 The local verification result is retained outside the repo; no approval was posted,
 no ratification was fabricated and no acceptance artifact was published.
+
+## M1-PR30 — locked local runtime, issue #48
+
+The dedicated M1 composition consumes the published Fabric 58fe2aa, ML c630ef1
+and Engines e9b0d10 releases. Admission binds complete asset SHA256 inventories,
+Sigstore publisher/source/dispatch identities, the actual distinct Spec pins and
+owner-approved development permission from Engines run 43389242347. The approved
+native hashes are unchanged by publication. Frozen M0 inputs remain unchanged.
+
+The real P-M1 gate passed: separate SPIFFE roles with bounded renewable SVIDs,
+PostgreSQL/14 published runtime migrations, S3 round trip, broker mTLS, Temporal
+worker, Ray and native Engine status RPC (CREATED, no outputs). Deliberate failure
+cleanup removed the owned project. Twelve focused admission/lifecycle/renewal
+checks passed; an ownership-condition mutation was detected by the negative test.
+The existing M0 live service/network/isolation/conformance checks also passed.
+The final clean-source full-gate result is recorded with the PR.
+
+This is local startup qualification only. No inference ran, no owner keyring was
+initialized and no production/release/submission authority was seeded. Subsequent
+M1 isolation, inference and recovery qualification remain separate tasks. See
+[m1-composition](m1-composition.md) and [ADR-0001](decisions/0001-published-m1-local-composition.md).
+
+### Hosted SPIRE startup correction — issue #48 / PR #51
+
+The hosted checkout made the SPIRE admin socket pathname 110 bytes, beyond
+Linux's 107-byte limit. Admin and workload sockets now use separate short `/tmp`
+directories regardless of checkout depth or TMPDIR. The admin directory remains
+0700 and unmounted; keys/state retain their private owned invocation location.
+Real pinned-SPIRE regression checks reproduce long state paths and verify live
+attestation plus process/admin-socket cleanup on normal and exceptional exits.
+These checks run in the M1 CI job and the default full gate. Identity policy,
+certificate lifetimes and readiness timeouts are unchanged.
