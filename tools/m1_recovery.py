@@ -576,6 +576,12 @@ def kill_at_receipt(stack, actual, lock, stopping):
     raise ValueError("M1_RECOVERY_MISSING_BOUNDARY")
 
 
+def finish_worker_kill(pending):
+    state = pending.result(timeout=20)
+    require(state == {"physical_state": "RUNNING", "error_code": "NONE"})
+    return state
+
+
 def run_case(case):
     require(case in CASES)
     kind, side = case.split("-")
@@ -720,7 +726,7 @@ def run_case(case):
             until = time.monotonic() + 75
             while time.monotonic() < until:
                 if pending_kill is not None and pending_kill.done() and not killed:
-                    state_at_fault = pending_kill.result()
+                    state_at_fault = finish_worker_kill(pending_kill)
                     killed = observed = True
                     if lock is None:
                         raise ValueError("M1_RECOVERY_BARRIER")
@@ -773,16 +779,16 @@ def run_case(case):
                         pass
                 workflow_history = history(stack, identifier)
                 if workflow_history["status"] in {"COMPLETED", "FAILED"}:
-                    if kind == "worker" and side == "before" and not killed:
-                        state = native_status(stack, actual)
-                        live.phase("RECOVERY_MISSING_BOUNDARY:" + json.dumps(state))
-                        container = stack.compose("ps", "-q", "runtime").decode().strip()
-                        raw = live.capture(["docker", "logs", container], 1 << 20)
-                        reasons = re.findall(
-                            rb"runtime_(?:auth|registry|upload)_denied [a-z_]+", raw
-                        )
-                        live.phase("RECOVERY_DENIALS:" + json.dumps([r.decode() for r in reasons]))
-                        raise ValueError("M1_RECOVERY_MISSING_BOUNDARY")
+                    if pending_kill is not None and not killed:
+                        # SIGKILL can make Ray/Temporal terminal before Docker's
+                        # exit-state inspection has completed in the monitor.
+                        state_at_fault = finish_worker_kill(pending_kill)
+                        killed = observed = True
+                        if lock is None:
+                            raise ValueError("M1_RECOVERY_BARRIER")
+                        lock.close()
+                        lock = None
+                        live.phase("RECOVERY_KILLED_RUNNING_WORKER")
                     released = workflow_history["status"] == "COMPLETED"
                     break
                 time.sleep(0.2)

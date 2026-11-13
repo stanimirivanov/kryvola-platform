@@ -248,3 +248,29 @@ class RecoveryEvidenceTests(unittest.TestCase):
             self.assertEqual(used["expires_unix_ms"], 0)
             self.assertEqual(owner["expires_unix_ms"], 0)
             self.assertEqual(pending["scope"], {"fence": "1"})
+
+    def test_terminal_workflow_waits_for_in_progress_kill_verification(self):
+        import threading
+        from concurrent.futures import ThreadPoolExecutor
+
+        from tools.m1_recovery import finish_worker_kill
+
+        release = threading.Event()
+
+        def verify_kill():
+            if not release.wait(1):
+                raise TimeoutError
+            return {"physical_state": "RUNNING", "error_code": "NONE"}
+
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            pending = pool.submit(verify_kill)
+            self.assertFalse(pending.done())
+            timer = threading.Timer(0.02, release.set)
+            timer.start()
+            try:
+                self.assertEqual(
+                    finish_worker_kill(pending), {"physical_state": "RUNNING", "error_code": "NONE"}
+                )
+            finally:
+                release.set()
+                timer.join()
