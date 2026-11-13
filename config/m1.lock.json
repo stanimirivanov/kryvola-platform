@@ -1,0 +1,253 @@
+{
+  "compatibility": {
+    "control_assets": {
+      "descriptor.bin": "ed26636c79b2a928deea495b782062c12e4f8340268403041f26708948d70ec2",
+      "limits.json": "f3ec6ba6ff3ff3bba649716cf0f1aaee799e467266d68552929fb6a877761ff7",
+      "schemas.json": "6c47d9d36b4f72e41b89a7523c8dafd9ddf3fe9f65d463e80db8df7c81cd3fc9"
+    },
+    "engines_spec": {
+      "artifact_root": "contracts/spec",
+      "contract_version": "0.1.0-preview.10",
+      "manifest_sha256": "90b5977cbed74424861517af892ae513762ccd8c83a75341f7701fb77aaad3fa",
+      "native_artifact_root": "contracts/native",
+      "native_manifest_sha256": "2784fc4c289aeaa1c792cdbe41499e81c8b36644b364e0e1b0d70a590effc725",
+      "repository": "https://github.com/stanimirivanov/kryvola-spec",
+      "revision": "52a5098bd8d8f740e8c20dba21b23248deb82d39"
+    },
+    "fabric_ml_spec": {
+      "artifact_root": "contracts/spec",
+      "contract_version": "0.1.0-preview.10",
+      "manifest_sha256": "f6cd03c7a99f84252c7e437359c1348a5781859496b071e1113f7275e7877c26",
+      "native_artifact_root": "contracts/native",
+      "native_manifest_sha256": "cd39e62b128523a494a2f29c3c146948d7e9cb80c141d5ec6f3be28dc1124f17",
+      "repository": "https://github.com/stanimirivanov/kryvola-spec",
+      "revision": "a5277f8d5d4790ba1bdab762b4fc230834f3d7b4"
+    }
+  },
+  "components": {
+    "engines": {
+      "assets": {
+        "CPU-Engine.Dockerfile": {
+          "sha256": "8699b3ee0bf5af59237b4b8316e35557b8a3a86e29691f9dcef6d902194bcfe7",
+          "url": "https://github.com/stanimirivanov/kryvola-engines/releases/download/m1-e9b0d104c22dc944e7c3e03b8afb0f2ca41e670c/CPU-Engine.Dockerfile"
+        },
+        "Cargo.lock": {
+          "sha256": "b82b4de18eb29fadb2a13d2dd1b2c87f9dcb3c770c9a36ff7083794b96c3f3cc",
+          "url": "https://github.com/stanimirivanov/kryvola-engines/releases/download/m1-e9b0d104c22dc944e7c3e03b8afb0f2ca41e670c/Cargo.lock"
+        },
+        "Native-Build.Dockerfile": {
+          "sha256": "c87e7ccdc65519db3a73e0651102ccfa53faa01a2330c531c87e6eb833078888",
+          "url": "https://github.com/stanimirivanov/kryvola-engines/releases/download/m1-e9b0d104c22dc944e7c3e03b8afb0f2ca41e670c/Native-Build.Dockerfile"
+        },
+        "cpu-runtime.tar": {
+          "sha256": "028f3393be9f1103aad07ca4aaa0a7b3032874210106a9291d485bce9a16f35e",
+          "url": "https://github.com/stanimirivanov/kryvola-engines/releases/download/m1-e9b0d104c22dc944e7c3e03b8afb0f2ca41e670c/cpu-runtime.tar"
+        },
+        "evaluator.lock": {
+          "sha256": "7ec3e509b2ac22645e049e912f186f787737d4e565d0863e146efaf76bf43fa1",
+          "url": "https://github.com/stanimirivanov/kryvola-engines/releases/download/m1-e9b0d104c22dc944e7c3e03b8afb0f2ca41e670c/evaluator.lock"
+        },
+        "image-subject.json": {
+          "sha256": "e4e8fcc4897ff03ea829edad94cd69db765e007c2f4fe75cd1c14053787a8f80",
+          "url": "https://github.com/stanimirivanov/kryvola-engines/releases/download/m1-e9b0d104c22dc944e7c3e03b8afb0f2ca41e670c/image-subject.json"
+        },
+        "image.json": {
+          "sha256": "dfb06e4b3607790c56eadff839b4099bdb0f5314a9cd8ae0ef3904179ac255da",
+          "url": "https://github.com/stanimirivanov/kryvola-engines/releases/download/m1-e9b0d104c22dc944e7c3e03b8afb0f2ca41e670c/image.json"
+        },
+        "kryvola_owner-0.1.0.dev2-cp314-cp314-manylinux_2_34_x86_64.whl": {
+          "sha256": "38c51cf75b1ae99b5a2fa116c8c5215b115737dd33f227dbff63c08f5aace036",
+          "url": "https://github.com/stanimirivanov/kryvola-engines/releases/download/m1-e9b0d104c22dc944e7c3e03b8afb0f2ca41e670c/kryvola_owner-0.1.0.dev2-cp314-cp314-manylinux_2_34_x86_64.whl"
+        },
+        "manifest.json": {
+          "sha256": "1b1d661cadb74bd503f866cf6a081dc82c5afc327dbe0663c80bb2217ce63b42",
+          "url": "https://github.com/stanimirivanov/kryvola-engines/releases/download/m1-e9b0d104c22dc944e7c3e03b8afb0f2ca41e670c/manifest.json"
+        },
+        "manifest.sigstore.json": {
+          "sha256": "58533737a82b38238b3f081fa79bc02d638b18b87afc0aad4084cb316e8914b6",
+          "url": "https://github.com/stanimirivanov/kryvola-engines/releases/download/m1-e9b0d104c22dc944e7c3e03b8afb0f2ca41e670c/manifest.sigstore.json"
+        },
+        "owner-approval.json": {
+          "sha256": "19f5adcc052a0f3f381319e76cde0d19afcaf37c4fa904b99c251af20f130769",
+          "url": "https://github.com/stanimirivanov/kryvola-engines/releases/download/m1-e9b0d104c22dc944e7c3e03b8afb0f2ca41e670c/owner-approval.json"
+        },
+        "owner.lock": {
+          "sha256": "341a0e9fed5f9ae3321828f6609c68729ea8fbb5575d84f8766485a68633b84a",
+          "url": "https://github.com/stanimirivanov/kryvola-engines/releases/download/m1-e9b0d104c22dc944e7c3e03b8afb0f2ca41e670c/owner.lock"
+        },
+        "provenance.json": {
+          "sha256": "4a81c709a9f50b3a11374943c119d6585391b17a0373f2d8ec81b3cf31f4ac4b",
+          "url": "https://github.com/stanimirivanov/kryvola-engines/releases/download/m1-e9b0d104c22dc944e7c3e03b8afb0f2ca41e670c/provenance.json"
+        },
+        "rust-toolchain.toml": {
+          "sha256": "c910997cb152c6dc8ed13b1fdf9fa28a4ed30d6776123e27dd6170e5c66067a0",
+          "url": "https://github.com/stanimirivanov/kryvola-engines/releases/download/m1-e9b0d104c22dc944e7c3e03b8afb0f2ca41e670c/rust-toolchain.toml"
+        },
+        "sbom.json": {
+          "sha256": "5d3bce2dd22f0eb38c6fc49608dd624377e0ed73adbd0c28da3c12722a97b414",
+          "url": "https://github.com/stanimirivanov/kryvola-engines/releases/download/m1-e9b0d104c22dc944e7c3e03b8afb0f2ca41e670c/sbom.json"
+        },
+        "spec.lock.json": {
+          "sha256": "7c55e9bd3d1565e9de8c5c4c6d03fd1f0908704786c6195579b18aa38d449ea7",
+          "url": "https://github.com/stanimirivanov/kryvola-engines/releases/download/m1-e9b0d104c22dc944e7c3e03b8afb0f2ca41e670c/spec.lock.json"
+        }
+      },
+      "identity": "https://github.com/stanimirivanov/kryvola-engines/.github/workflows/m1-release.yml@refs/heads/main",
+      "source": "e9b0d104c22dc944e7c3e03b8afb0f2ca41e670c",
+      "spec": {
+        "artifact_root": "contracts/spec",
+        "contract_version": "0.1.0-preview.10",
+        "manifest_sha256": "90b5977cbed74424861517af892ae513762ccd8c83a75341f7701fb77aaad3fa",
+        "native_artifact_root": "contracts/native",
+        "native_manifest_sha256": "2784fc4c289aeaa1c792cdbe41499e81c8b36644b364e0e1b0d70a590effc725",
+        "repository": "https://github.com/stanimirivanov/kryvola-spec",
+        "revision": "52a5098bd8d8f740e8c20dba21b23248deb82d39"
+      }
+    },
+    "fabric": {
+      "assets": {
+        "Cargo.lock": {
+          "sha256": "90289b05bf0e16ffcf906ac4be530bfa0574645b870280060f5c9be0b9bff88f",
+          "url": "https://github.com/stanimirivanov/kryvola-fabric/releases/download/m1-58fe2aa251c7b298f39c807b9d8151a073d2e5d4/Cargo.lock"
+        },
+        "inventory.json": {
+          "sha256": "9f8c373096617e922403819a28260595dddbf25041ca312cd01b8528bce505c9",
+          "url": "https://github.com/stanimirivanov/kryvola-fabric/releases/download/m1-58fe2aa251c7b298f39c807b9d8151a073d2e5d4/inventory.json"
+        },
+        "kryvola_fabric_ray-0.1.0.dev0+g58fe2aa251c7b298f39c807b9d8151a073d2e5d4-py3-none-any.whl": {
+          "sha256": "f602aa44bcbf5ed18f770f18650cc268a34f18cb894799b6aaef9edeaa549385",
+          "url": "https://github.com/stanimirivanov/kryvola-fabric/releases/download/m1-58fe2aa251c7b298f39c807b9d8151a073d2e5d4/kryvola_fabric_ray-0.1.0.dev0%2Bg58fe2aa251c7b298f39c807b9d8151a073d2e5d4-py3-none-any.whl"
+        },
+        "kryvola_fabric_workflow-0.1.0.dev0+g58fe2aa251c7b298f39c807b9d8151a073d2e5d4-py3-none-any.whl": {
+          "sha256": "1e1948fde284dec75e073b749a8afe6db1df654ff1ad14a9e22c386d7db91b5d",
+          "url": "https://github.com/stanimirivanov/kryvola-fabric/releases/download/m1-58fe2aa251c7b298f39c807b9d8151a073d2e5d4/kryvola_fabric_workflow-0.1.0.dev0%2Bg58fe2aa251c7b298f39c807b9d8151a073d2e5d4-py3-none-any.whl"
+        },
+        "manifest.json": {
+          "sha256": "4d56e9ede07db7c8fea989cb703a6fbea3904ce81aba0c914f6ac17c61e30f65",
+          "url": "https://github.com/stanimirivanov/kryvola-fabric/releases/download/m1-58fe2aa251c7b298f39c807b9d8151a073d2e5d4/manifest.json"
+        },
+        "manifest.sigstore.json": {
+          "sha256": "34567da019bdd02e18511a3158a0bb9bbd54b318fae602e1613f79fe6fa83fa4",
+          "url": "https://github.com/stanimirivanov/kryvola-fabric/releases/download/m1-58fe2aa251c7b298f39c807b9d8151a073d2e5d4/manifest.sigstore.json"
+        },
+        "native-runtime.json": {
+          "sha256": "0aa2b7f31baf81118169aad4c63acf3ae52df45610f6a99f5d99bd017b3a0c05",
+          "url": "https://github.com/stanimirivanov/kryvola-fabric/releases/download/m1-58fe2aa251c7b298f39c807b9d8151a073d2e5d4/native-runtime.json"
+        },
+        "owner-58fe2aa251c7b298f39c807b9d8151a073d2e5d4.tar": {
+          "sha256": "8c7a4e0e0224ec54e0c028f2eabed6108cf9e16df868f1ce881c527ebeb01114",
+          "url": "https://github.com/stanimirivanov/kryvola-fabric/releases/download/m1-58fe2aa251c7b298f39c807b9d8151a073d2e5d4/owner-58fe2aa251c7b298f39c807b9d8151a073d2e5d4.tar"
+        },
+        "provenance.json": {
+          "sha256": "448b842dd60a61d1eff86e2291c602ef4cb2fecb5a234adb8ab324d54d396cbe",
+          "url": "https://github.com/stanimirivanov/kryvola-fabric/releases/download/m1-58fe2aa251c7b298f39c807b9d8151a073d2e5d4/provenance.json"
+        },
+        "ray.Dockerfile": {
+          "sha256": "489b15c3ef546c42d0979b1b5ffa8cd08a48a9bd7dae022f70ade40b8fe4aa13",
+          "url": "https://github.com/stanimirivanov/kryvola-fabric/releases/download/m1-58fe2aa251c7b298f39c807b9d8151a073d2e5d4/ray.Dockerfile"
+        },
+        "ray.lock": {
+          "sha256": "fdf9fd9a1f6fc5ec447d73f3539eb690a4fcbb821ce8c8d839e7b855761def8d",
+          "url": "https://github.com/stanimirivanov/kryvola-fabric/releases/download/m1-58fe2aa251c7b298f39c807b9d8151a073d2e5d4/ray.lock"
+        },
+        "runtime-58fe2aa251c7b298f39c807b9d8151a073d2e5d4.tar": {
+          "sha256": "c6ebe3efbd9cec46b02e02a6bd9d6a500fb375686678aaca062f5b3be9167bf8",
+          "url": "https://github.com/stanimirivanov/kryvola-fabric/releases/download/m1-58fe2aa251c7b298f39c807b9d8151a073d2e5d4/runtime-58fe2aa251c7b298f39c807b9d8151a073d2e5d4.tar"
+        },
+        "rust-toolchain.toml": {
+          "sha256": "c910997cb152c6dc8ed13b1fdf9fa28a4ed30d6776123e27dd6170e5c66067a0",
+          "url": "https://github.com/stanimirivanov/kryvola-fabric/releases/download/m1-58fe2aa251c7b298f39c807b9d8151a073d2e5d4/rust-toolchain.toml"
+        },
+        "sbom.spdx.json": {
+          "sha256": "3a51c5e9db20d5cbaf3e2f87a86b7739b467ff6077d0ef633a227634bbfc125a",
+          "url": "https://github.com/stanimirivanov/kryvola-fabric/releases/download/m1-58fe2aa251c7b298f39c807b9d8151a073d2e5d4/sbom.spdx.json"
+        },
+        "spec.lock.json": {
+          "sha256": "4a49456633738d1d5d12b4696c9691b03231e5139196b013a7785047a5a95026",
+          "url": "https://github.com/stanimirivanov/kryvola-fabric/releases/download/m1-58fe2aa251c7b298f39c807b9d8151a073d2e5d4/spec.lock.json"
+        },
+        "uv.lock": {
+          "sha256": "9a9a24e874b494eeaf6185a9b8141cb808cf7e3d060637d8d9a6678dc5fb8d89",
+          "url": "https://github.com/stanimirivanov/kryvola-fabric/releases/download/m1-58fe2aa251c7b298f39c807b9d8151a073d2e5d4/uv.lock"
+        },
+        "workflow.lock": {
+          "sha256": "0567f0d0be1cf164b29caecffc3544ffef70690c84ed12e8098ff018888a962b",
+          "url": "https://github.com/stanimirivanov/kryvola-fabric/releases/download/m1-58fe2aa251c7b298f39c807b9d8151a073d2e5d4/workflow.lock"
+        }
+      },
+      "identity": "https://github.com/stanimirivanov/kryvola-fabric/.github/workflows/release.yml@refs/heads/main",
+      "source": "58fe2aa251c7b298f39c807b9d8151a073d2e5d4",
+      "spec": {
+        "artifact_root": "contracts/spec",
+        "contract_version": "0.1.0-preview.10",
+        "manifest_sha256": "f6cd03c7a99f84252c7e437359c1348a5781859496b071e1113f7275e7877c26",
+        "native_artifact_root": "contracts/native",
+        "native_manifest_sha256": "cd39e62b128523a494a2f29c3c146948d7e9cb80c141d5ec6f3be28dc1124f17",
+        "repository": "https://github.com/stanimirivanov/kryvola-spec",
+        "revision": "a5277f8d5d4790ba1bdab762b4fc230834f3d7b4"
+      }
+    },
+    "ml": {
+      "assets": {
+        "LICENSE": {
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "url": "https://github.com/stanimirivanov/kryvola-ml/releases/download/experimental-c630ef173072d48836dace2f68ec50717ae15d30/LICENSE"
+        },
+        "kryvola_ml-0.1.0.dev0+gc630ef173072d48836dace2f68ec50717ae15d30-py3-none-any.whl": {
+          "sha256": "2073cb09c7c53e52e24ef0cf277b5f7b5fde9422782d525648ab54180b9a9330",
+          "url": "https://github.com/stanimirivanov/kryvola-ml/releases/download/experimental-c630ef173072d48836dace2f68ec50717ae15d30/kryvola_ml-0.1.0.dev0%2Bgc630ef173072d48836dace2f68ec50717ae15d30-py3-none-any.whl"
+        },
+        "manifest.json": {
+          "sha256": "ca3d225044adfc9e413bd36cf1c346a4480c93c951a7abde6c664379bc42c2a2",
+          "url": "https://github.com/stanimirivanov/kryvola-ml/releases/download/experimental-c630ef173072d48836dace2f68ec50717ae15d30/manifest.json"
+        },
+        "manifest.sigstore.json": {
+          "sha256": "59fc2decb466c5e6b4dff2eda8beb2540cd426a727e04dfa9c8f17829992d98d",
+          "url": "https://github.com/stanimirivanov/kryvola-ml/releases/download/experimental-c630ef173072d48836dace2f68ec50717ae15d30/manifest.sigstore.json"
+        },
+        "provenance.json": {
+          "sha256": "eea52ac9f0868da83398f6f5bda5e451242bc77905ac34834b95c17e11bb4465",
+          "url": "https://github.com/stanimirivanov/kryvola-ml/releases/download/experimental-c630ef173072d48836dace2f68ec50717ae15d30/provenance.json"
+        },
+        "sbom.spdx.json": {
+          "sha256": "9db1f7f21e0f88c15ce358c3c3c8639b4d15a17767c3292e9fda922cf9df6187",
+          "url": "https://github.com/stanimirivanov/kryvola-ml/releases/download/experimental-c630ef173072d48836dace2f68ec50717ae15d30/sbom.spdx.json"
+        },
+        "uv.lock": {
+          "sha256": "d6d9bba1d2e7f02eb642b10f914f9b6ddfe66a25b69053b0729d7f27ae4a6f95",
+          "url": "https://github.com/stanimirivanov/kryvola-ml/releases/download/experimental-c630ef173072d48836dace2f68ec50717ae15d30/uv.lock"
+        }
+      },
+      "identity": "https://github.com/stanimirivanov/kryvola-ml/.github/workflows/release.yml@refs/heads/main",
+      "source": "c630ef173072d48836dace2f68ec50717ae15d30",
+      "spec": {
+        "artifact_root": "src/kryvola_ml/_spec",
+        "contract_version": "0.1.0-preview.10",
+        "manifest_sha256": "f6cd03c7a99f84252c7e437359c1348a5781859496b071e1113f7275e7877c26",
+        "native_artifact_root": "src/kryvola_ml/_wire",
+        "native_manifest_sha256": "cd39e62b128523a494a2f29c3c146948d7e9cb80c141d5ec6f3be28dc1124f17",
+        "repository": "https://github.com/stanimirivanov/kryvola-spec",
+        "revision": "a5277f8d5d4790ba1bdab762b4fc230834f3d7b4"
+      }
+    }
+  },
+  "permissions": {
+    "cpu_sha256": "028f3393be9f1103aad07ca4aaa0a7b3032874210106a9291d485bce9a16f35e",
+    "image_sha256": "f0973be2179fdb707de7fd5793a05e4bd04579868468a6a69f284011d2ee2442",
+    "owner": "stanimirivanov",
+    "owner_sha256": "38c51cf75b1ae99b5a2fa116c8c5215b115737dd33f227dbff63c08f5aace036",
+    "profile": "OWNER_APPROVED_DEVELOPMENT_ONLY",
+    "run_id": "43389242347",
+    "source": "e9b0d104c22dc944e7c3e03b8afb0f2ca41e670c"
+  },
+  "schema_version": "platform-m1-lock-v1",
+  "services": {
+    "postgres": "postgres@sha256:0b81cec82228160abfa753aeaad0609b709eb26eeb950f2e404ad2326e1cc370",
+    "python": "python:3.14.7-trixie@sha256:0876e54cf728d89fd9d0fdaf5837b9ee879ea5fbbd6fd0cddbe5eb0cce3f5f9e",
+    "ray": "rayproject/ray@sha256:e93e502244bf8c0ecf8c633099f7819d7c973d76eded8e32617e1fb66725da02",
+    "redpanda": "docker.redpanda.com/redpandadata/redpanda@sha256:a9dffb84f388a7a2d4ab1aaa541cd0b9a484f0f5c9b72cb54c551953352769ec",
+    "s3": "chrislusf/seaweedfs@sha256:3a522c379599e163433a636e75022630848b63a74f08ea37bf06f8d776e9a707",
+    "temporal": "temporalio/server@sha256:2695f2564ec51aa84232bf3fa59b31e2cce99bec437a64f5bc487cbe21b2de0e",
+    "temporal-cli": "temporalio/admin-tools@sha256:4fdaf9122f8beb448c823976232f6616a8cd94687f6984eeaf25c2b1457d5fed"
+  }
+}
