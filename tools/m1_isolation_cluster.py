@@ -81,6 +81,22 @@ class Cluster:
                     raise ValueError("M1_CLUSTER_PROBE_NOT_READY") from None
                 time.sleep(2)
 
+    def wait_database(self):
+        self.wait(
+            lambda: self.execute(
+                "control",
+                "postgres",
+                "postgres",
+                "pg_isready",
+                "-h",
+                "127.0.0.1",
+                "-U",
+                "m1_admin",
+                "-d",
+                "postgres",
+            )
+        )
+
     def probe(self, role, value):
         domain, pod, container = (
             ("compute", "compute", "instrumenter")
@@ -260,20 +276,7 @@ class Cluster:
             for x in json.loads((cred / "s3-server.json").read_bytes())["identities"]
         ]
         self.apply(backends(locked))
-        self.wait(
-            lambda: self.execute(
-                "control",
-                "postgres",
-                "postgres",
-                "psql",
-                "-U",
-                "m1_admin",
-                "-d",
-                "postgres",
-                "-Atc",
-                "SELECT 1",
-            )
-        )
+        self.wait_database()
         password = urlsplit((cred / "database").read_text()).password
         self.execute(
             "control",

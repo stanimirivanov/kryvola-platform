@@ -68,3 +68,30 @@ class IsolationProfileTests(unittest.TestCase):
                 for v in pod["spec"]["containers"][0]["volumeMounts"]
             )
         )
+
+
+class DatabaseReadinessTests(unittest.TestCase):
+    def test_temporary_unix_server_cannot_satisfy_database_readiness(self):
+        import subprocess
+        from unittest.mock import patch
+
+        from tools import m1_isolation_cluster as m
+
+        adapter = m.Cluster.__new__(m.Cluster)
+        phase = ["temporary"]
+        calls = []
+
+        def execute(*args):
+            calls.append(args)
+            if args[3] == "pg_isready" and "-h" in args and "127.0.0.1" in args:
+                if phase[0] == "temporary":
+                    phase[0] = "final"
+                    raise subprocess.CalledProcessError(1, args)
+                return b"accepting connections"
+            return b"1"  # the initial Unix socket already answers SQL
+
+        adapter.execute = execute
+        with patch.object(m.time, "sleep"):
+            adapter.wait_database()
+        self.assertEqual(phase[0], "final")
+        self.assertEqual(len(calls), 2)
