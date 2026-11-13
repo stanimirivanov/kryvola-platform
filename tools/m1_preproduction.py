@@ -382,7 +382,7 @@ def validate(value, images=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("check", "render"))
+    parser.add_argument("action", choices=("check", "render", "template"))
     for role in ("runtime", "ray", "owner"):
         parser.add_argument("--" + role + "-image")
     args = parser.parse_args()
@@ -390,6 +390,8 @@ def main():
     if args.action == "check":
         validate(json.loads(MANIFEST.read_bytes()))
         print("M1_PREPRODUCTION_BOUNDARIES_VALID; no deployment or dataplane qualification")
+    elif args.action == "template":
+        print(json.dumps(build(), indent=2, sort_keys=True))
     else:
         if any(v is None or v.startswith("$") for v in images.values()):
             parser.error("render requires three independently selected digest-pinned role images")

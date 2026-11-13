@@ -27,6 +27,7 @@ def main() -> None:
     run(sys.executable, "tools/architecture.py")
     run(sys.executable, "tools/integration.py", "check")
     run(sys.executable, "tools/m1.py", "check")
+    run(sys.executable, "tools/m1_preproduction.py", "check")
     run(sys.executable, "tools/workflow_assets.py", "check")
     run(sys.executable, "tools/release_conformance.py", "check")
     run(sys.executable, "tools/m0_acceptance.py", "--check")
@@ -75,6 +76,7 @@ def main() -> None:
                 "-v",
             )
             run(sys.executable, "tools/m1.py", "ci")
+            run(sys.executable, "tools/m1_cluster.py", "ci")
 
 
 if __name__ == "__main__":

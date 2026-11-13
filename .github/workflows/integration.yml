@@ -69,3 +69,25 @@ jobs:
           path: build/m1-report.json
           if-no-files-found: ignore
           retention-days: 7
+
+  m1-boundaries:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.12.5"
+      - run: uv sync --locked
+      - run: uv run --locked python tools/m1_preproduction.py check
+      - run: uv run --locked python tools/m1_cluster.py install
+      - run: uv run --locked python tools/m1_cluster.py ci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m1-public-admission-observations
+          path: build/m1-admission-report.json
+          if-no-files-found: ignore
+          retention-days: 7
