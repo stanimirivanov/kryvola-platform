@@ -62,6 +62,7 @@ jobs:
       - run: uv run --locked python tools/m1.py install
       - run: uv run --locked python -m unittest discover -s tests -p live_m1_identity.py -v
       - run: uv run --locked python tools/m1.py ci
+      - run: uv run --locked python -m unittest discover -s tests -p live_m1_inference.py -v
       - run: uv run --locked python tools/m1_isolation_local.py
       - uses: actions/upload-artifact@v4
         if: always()
@@ -69,6 +70,7 @@ jobs:
           name: m1-public-startup-observations
           path: |
             build/m1-report.json
+            build/m1-inference-report.json
             build/m1-local-isolation.json
           if-no-files-found: ignore
           retention-days: 7

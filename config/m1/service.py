@@ -183,12 +183,19 @@ async def workflow():
         return json.loads((SECRETS / "tokens.json").read_bytes()).get(action, "")
 
     registry = Registry("runtime", 8443, tls("workflow"), "spiffe://m1.test/runtime", credential)
-    dispatcher = RayDispatcher(local_jobs(), local_candidates(Path("/run/compute")))
+    dispatcher = RayDispatcher(local_jobs(), local_candidates(STATE / "candidates"))
     activities = ComputeActivities(registry, dispatcher)
+    # The native coordinator rejects group/world-readable CLI credentials.
+    # Keep operator inputs read-only and copy them into this workflow UID's
+    # private directory; a restart admits newly provisioned release policy.
+    private = Path(tempfile.mkdtemp(prefix="m1-release-"))
+    for name in ("database-release", "release.json"):
+        (private / name).write_bytes((SECRETS / name).read_bytes())
+        (private / name).chmod(0o600)
     release = CoordinatorRelease(
         Path("/opt/fabric/bin/fabric-runtime"),
-        SECRETS / "database-release",
-        SECRETS / "release.json",
+        private / "database-release",
+        private / "release.json",
     )
     client = await Client.connect("temporal:7233", data_converter=DATA_CONVERTER)
     server = await proxy(8265, "ray", 8265)

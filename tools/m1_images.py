@@ -1,8 +1,11 @@
 """Build local role images from verified published artifacts, never sibling source."""
 
+import hashlib
 import json
+import re
 import shutil
 import subprocess
+import tarfile
 import tempfile
 import tomllib
 import uuid
@@ -12,15 +15,66 @@ from zipfile import ZipFile
 
 if __package__:
     from . import m1_assets as assets
-    from . import m1_identity
+    from . import m1_identity, m1_owner_packages
 else:
     import m1_assets as assets
     import m1_identity
+    import m1_owner_packages
 
 UV = (
     "ghcr.io/astral-sh/uv:0.12.5@sha256:"
     "e85be844203885286c60ffad8a858d48afb6c5a5c237ca0e67f12e74b8f174b1"
 )
+
+
+def config_digest(path):
+    """Adapt Engines' Docker-save identity check; inspect IDs vary by backend."""
+    with tarfile.open(path, "r:") as stream:
+        members = stream.getmembers()
+        assets.require(len(members) <= 128, "M1_IMAGE_CONFIG")
+
+        def read(name, limit):
+            found = [member for member in members if member.name == name]
+            assets.require(len(found) == 1, "M1_IMAGE_CONFIG")
+            member = found[0]
+            assets.require(member.isfile() and 0 < member.size <= limit, "M1_IMAGE_CONFIG")
+            data = stream.extractfile(member)
+            if data is None:
+                raise ValueError("M1_IMAGE_CONFIG")
+            result = data.read(limit + 1)
+            assets.require(len(result) == member.size, "M1_IMAGE_CONFIG")
+            return result
+
+        manifest = json.loads(read("manifest.json", 64 << 10))
+        assets.require(isinstance(manifest, list) and len(manifest) == 1, "M1_IMAGE_CONFIG")
+        name = manifest[0]["Config"]
+        match = re.fullmatch(r"(?:blobs/sha256/([0-9a-f]{64})|([0-9a-f]{64})\.json)", name)
+        assets.require(match is not None, "M1_IMAGE_CONFIG")
+        if match is None:
+            raise ValueError("M1_IMAGE_CONFIG")
+        raw = read(name, 1 << 20)
+        digest = hashlib.sha256(raw).hexdigest()
+        assets.require(digest == (match[1] or match[2]), "M1_IMAGE_CONFIG")
+        config = json.loads(raw)
+        assets.require(
+            config["os"] == "linux"
+            and config["architecture"] == "amd64"
+            and config["rootfs"]["type"] == "layers",
+            "M1_IMAGE_CONFIG",
+        )
+        return digest
+
+
+def image_config(image):
+    with tempfile.TemporaryDirectory(prefix="m1-image-config-") as tmp:
+        path = Path(tmp) / "image.tar"
+        subprocess.run(
+            ["docker", "image", "save", "--output", str(path), image],
+            check=True,
+            capture_output=True,
+            timeout=120,
+        )
+        return config_digest(path)
 
 
 def requirements(lock, path):
@@ -76,6 +130,7 @@ def prepare(locked):
                             shutil.copyfile(wheel, folder / wheel.name)
                         shutil.copyfile(fabric / "workflow.lock", folder / "requirements.txt")
                     else:
+                        m1_owner_packages.stage(folder / "owner-debs")
                         for wheel in [*engine.glob("kryvola_owner-*.whl"), *ml.glob("*.whl")]:
                             shutil.copyfile(wheel, folder / wheel.name)
                         requirements(ml / "uv.lock", folder / "requirements.txt")
@@ -92,6 +147,14 @@ RUN uv pip sync --python /opt/venv/bin/python --require-hashes \\
     COPY spire-agent /opt/m1/spire-agent
     ENV PATH=/opt/venv/bin:$PATH PYTHONDONTWRITEBYTECODE=1
     """
+                    if role == "owner":
+                        recipe += (
+                            "COPY owner-debs/ /opt/owner-debs/\n"
+                            "RUN dpkg -i /opt/owner-debs/*.deb && rm -rf /opt/owner-debs\n"
+                            "RUN groupadd --gid 3001 m1-owner && useradd --uid 3001 "
+                            "--gid 3001 --home-dir /owner --no-create-home "
+                            "--shell /usr/sbin/nologin m1-owner\n"
+                        )
                 (folder / "Dockerfile").write_text(recipe)
                 tag = "kryvola-m1-" + role + ":" + uuid.uuid4().hex
                 tags.append(tag)
