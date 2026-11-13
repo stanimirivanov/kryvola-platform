@@ -63,3 +63,22 @@ independent of checkout depth and `TMPDIR`. The admin directory stays mode 0700;
 only the workload directory is mounted into roles. Keys and database state stay
 in the private owned invocation folder. The real long-path identity regression
 checks attestation and process/socket cleanup on normal and exceptional exits.
+# Fabric publication for M1-PR33
+
+The Fabric M1 release at `32d8528fd7a183b992643acb53e861fccc30bcb6`
+was published by the existing main-only
+[run 43449820501](https://github.com/stanimirivanov/kryvola-fabric/actions/runs/43449820501).
+All 17 downloaded assets passed Fabric's inventory/source/subject verifier and
+keyless publisher verification, followed by Platform's complete three-component
+admission. `config/m1.lock.json` records every exact hash and immutable URL.
+The manifest SHA-256 is
+`c5316123f78844241a8a645474bede443b1ed6a176622e2707ae37d7c8ecbf02`;
+the runtime archive is
+`2fc6409289853dc61f8553878a2253c1333143a945970ac366de7148e5e639da`;
+the owner archive is
+`8c7a4e0e0224ec54e0c028f2eabed6108cf9e16df868f1ce881c527ebeb01114`.
+Engines and ML pins, the frozen M0 environment, and the existing Spec
+compatibility assessment are unchanged. The published Ray worker now passes
+the real native-Engine status preflight that failed with `58fe2aa`.
+This preflight proves wire compatibility; it does not qualify successful inference.
+
