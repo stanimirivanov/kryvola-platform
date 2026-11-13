@@ -384,3 +384,26 @@ required backend ingress, privileged/host-network/host-mount rejection and owned
 cleanup. No application Pods, Cilium dataplane or identity controllers are started
 by that gate. Actual network/identity isolation and inference remain unqualified
 until their planned M1 tasks. See [preproduction boundaries](m1-preproduction.md).
+
+## M1-PR32 — compromised-worker isolation, issue #54
+
+Local and disposable preproduction campaigns exercise the real published runtime:
+foreign artifact scope, worker privilege/release-grant requests and a stolen
+coordinator credential must be denied while valid artifact/coordinator calls
+remain usable. Actual failed root/mount mutations, credential/library/volume
+absence, owner-side canaries and healthy denied targets complement the API checks.
+Reports are structural, source/input-bound and scanned with redacted runtime audits.
+
+The Kubernetes fixture now installs real pinned Cilium, SPIRE/controller and CSI,
+uses verified kubelet TLS and pod-UID/service-account attestation, and exercises
+PR31's network rules including overriding link-local denial. Its explicit test
+overlay substitutes synthetic data/volumes and instrumented launches. It never
+forges audited core/swap labels or certifies physical/host isolation. Local Ray
+now shares Engine's read-only root, dropped capabilities, no-new-privileges and
+zero core limit; both filesystems are inventoried. Bounded Seaweed volume growth
+keeps internal and artifact collections usable within the existing storage cap.
+
+The separate admission gate and frozen M0 checks remain required. No component
+release pin or approved Engine bytes changed. Real owner-to-owner inference is
+PR33. See [worker isolation](m1-isolation.md) and
+[ADR-0003](decisions/0003-compromised-worker-qualification.md).

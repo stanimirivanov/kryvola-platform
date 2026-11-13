@@ -98,3 +98,9 @@ change frozen M0 acceptance.
 [M1 preproduction boundaries](docs/m1-preproduction.md) add offline manifest checks
 and an explicitly installed, disposable local Kubernetes API-admission gate.
 This does not deploy applications or establish dataplane/identity qualification.
+
+[M1 worker isolation](docs/m1-isolation.md) adds authenticated attack/positive-control
+campaigns against the published runtime, plus actual Cilium/SPIRE enforcement in
+an owned synthetic-data Kubernetes fixture. Its reports distinguish network and
+application denials and leave physical host hardening and complete inference
+unqualified.

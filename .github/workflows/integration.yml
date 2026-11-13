@@ -62,11 +62,14 @@ jobs:
       - run: uv run --locked python tools/m1.py install
       - run: uv run --locked python -m unittest discover -s tests -p live_m1_identity.py -v
       - run: uv run --locked python tools/m1.py ci
+      - run: uv run --locked python tools/m1_isolation_local.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: m1-public-startup-observations
-          path: build/m1-report.json
+          path: |
+            build/m1-report.json
+            build/m1-local-isolation.json
           if-no-files-found: ignore
           retention-days: 7
 
@@ -89,5 +92,30 @@ jobs:
         with:
           name: m1-public-admission-observations
           path: build/m1-admission-report.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+
+  m1-worker-isolation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.12.5"
+      - run: uv sync --locked
+      - run: uv run --locked python tools/install_release.py
+      - run: uv run --locked python tools/m1.py install
+      - run: uv run --locked python tools/m1_cluster.py install
+      - run: uv run --locked python tools/m1_live_infra.py
+      - run: uv run --locked python tools/m1_isolation_cluster.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m1-public-worker-isolation
+          path: build/m1-cluster-isolation.json
           if-no-files-found: ignore
           retention-days: 7

@@ -1,0 +1,6 @@
+# Two bounded slots: one internal filer collection, one M1 artifact collection.
+[master.volume_growth]
+copy_1 = 1
+copy_2 = 1
+copy_3 = 1
+copy_other = 1

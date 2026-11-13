@@ -113,6 +113,12 @@ class M1RunnerTests(unittest.TestCase):
         import copy
 
         changes = (
+            lambda c: c["services"]["ray"].update(volumes=["owner:/renamed-private-volume"]),
+            lambda c: c["services"]["ray"].update(networks=["compute", "data"]),
+            lambda c: c["services"]["ray"].update(cap_drop=[]),
+            lambda c: c["services"]["ray"].update(security_opt=[]),
+            lambda c: c["services"]["ray"].update(read_only=False),
+            lambda c: c["services"]["engine"].update(ulimits={}),
             lambda c: c["services"]["engine"].update(image="cpu-engine:latest"),
             lambda c: c["services"]["ray"].update(environment={"DATABASE_URL": "secret"}),
             lambda c: c["services"]["ray"].update(

@@ -1,0 +1,89 @@
+{
+  "global": {
+    "spire": {
+      "trustDomain": "m1.test",
+      "clusterName": "m1-isolation",
+      "namespaces": {
+        "create": true,
+        "system": {
+          "name": "spire",
+          "create": true
+        },
+        "server": {
+          "name": "spire",
+          "create": true
+        }
+      }
+    }
+  },
+  "installAndUpgradeHooks": {
+    "enabled": false
+  },
+  "deleteHooks": {
+    "enabled": false
+  },
+  "spiffe-oidc-discovery-provider": {
+    "enabled": false
+  },
+  "spire-server": {
+    "image": {
+      "tag": "1.16.0"
+    },
+    "persistence": {
+      "type": "emptyDir"
+    },
+    "nodeSelector": {
+      "kryvola.io.node-restriction.kubernetes.io/domain": "control"
+    },
+    "controllerManager": {
+      "className": "m1-preproduction",
+      "filterByClassName": true,
+      "watchClassless": false,
+      "validatingWebhookConfiguration": {
+        "enabled": false
+      },
+      "installAndUpgradeHook": {
+        "enabled": false
+      },
+      "deleteHook": {
+        "enabled": false
+      },
+      "identities": {
+        "clusterSPIFFEIDs": {
+          "default": {
+            "enabled": false
+          },
+          "oidc-discovery-provider": {
+            "enabled": false
+          },
+          "test-keys": {
+            "enabled": false
+          }
+        }
+      }
+    }
+  },
+  "spire-agent": {
+    "image": {
+      "tag": "1.16.0"
+    },
+    "socketPath": "/run/spire/agent-sockets/agent.sock",
+    "workloadAttestors": {
+      "k8s": {
+        "verification": {
+          "type": "hostCert"
+        }
+      },
+      "unix": {
+        "enabled": false
+      }
+    },
+    "kubeletAddress": {
+      "mode": "hostname"
+    },
+    "hostNetwork": true
+  },
+  "spiffe-csi-driver": {
+    "agentSocketPath": "/run/spire/agent-sockets/agent.sock"
+  }
+}
