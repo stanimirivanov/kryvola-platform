@@ -1,0 +1,15 @@
+{
+  "cilium-crd.yaml": {
+    "sha256": "62c6de8f358da125b94468d39187edb1cea157d79503fdc50ccec8a6aaa79a76",
+    "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.4/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml"
+  },
+  "kind": {
+    "sha256": "aee6151561422756b764a4ae28e7f44cda5af5a9eead3cc9985112b1de8d8e0d",
+    "url": "https://github.com/kubernetes-sigs/kind/releases/download/v0.33.0/kind-linux-amd64"
+  },
+  "node": "kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5",
+  "spire-crd.yaml": {
+    "sha256": "f35a66a3b1dedb2793c465f03502df05035d4fb243a7d1313c5cf7dfbe3af2fd",
+    "url": "https://raw.githubusercontent.com/spiffe/spire-controller-manager/v0.7.1/config/crd/bases/spire.spiffe.io_clusterspiffeids.yaml"
+  }
+}

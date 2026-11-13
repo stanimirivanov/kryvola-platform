@@ -94,3 +94,7 @@ real runtime roles and owned local cleanup. `tools/m1.py check` is offline;
 `tools/m1.py ci` is the real startup/migration gate. Follow the documented explicit
 asset/tool installation first. This does not qualify successful inference or
 change frozen M0 acceptance.
+
+[M1 preproduction boundaries](docs/m1-preproduction.md) add offline manifest checks
+and an explicitly installed, disposable local Kubernetes API-admission gate.
+This does not deploy applications or establish dataplane/identity qualification.

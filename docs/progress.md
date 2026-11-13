@@ -368,3 +368,19 @@ Real pinned-SPIRE regression checks reproduce long state paths and verify live
 attestation plus process/admin-socket cleanup on normal and exceptional exits.
 These checks run in the M1 CI job and the default full gate. Identity policy,
 certificate lifetimes and readiness timeouts are unchanged.
+
+## M1-PR31 — preproduction deployment boundaries, issue #52
+
+The fixed generated profile separates owner/control/compute/data namespaces,
+service accounts and credentials; uses SPIFFE CSI/namespace-SA registrations;
+and requires restricted Pods, bounded memory/scratch, audited core/swap-disabled
+domain nodes, default-deny networking and explicit Cilium host/metadata denial.
+The existing signed release pins are unchanged. Runtime/owner/Ray wrapper images
+remain independently selected operator inputs, with no mutable defaults.
+
+Offline positive/negative tests and a real disposable Kubernetes API gate cover
+canonical profile validation, core-limit inheritance, resource/credential bounds,
+required backend ingress, privileged/host-network/host-mount rejection and owned
+cleanup. No application Pods, Cilium dataplane or identity controllers are started
+by that gate. Actual network/identity isolation and inference remain unqualified
+until their planned M1 tasks. See [preproduction boundaries](m1-preproduction.md).
