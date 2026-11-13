@@ -50,8 +50,9 @@ not independent legal/security review or production permission. Release URLs may
 be mutable at GitHub; accepted bytes, publisher source and OCI references are
 pinned independently.
 
-No inference is executed, no owner decryption key is initialized, and no release
-or submission grant is seeded. The empty policy fails closed. The owner container
+The startup-only `tools/m1.py ci` gate executes no inference, initializes no owner
+decryption key, and seeds no release
+or submission grant. The empty policy fails closed. The owner container
 is a local custody/SDK startup boundary; actual keyring and operator-grant setup
 belongs to the later end-to-end qualification. Its ready state does not assert
 recoverable custody or successful opening. Similarly the startup Engine assignment
@@ -63,3 +64,22 @@ independent of checkout depth and `TMPDIR`. The admin directory stays mode 0700;
 only the workload directory is mounted into roles. Keys and database state stay
 in the private owned invocation folder. The real long-path identity regression
 checks attestation and process/socket cleanup on normal and exceptional exits.
+# Fabric publication for M1-PR33
+
+The Fabric M1 release at `9f16af43cda3a2b6fe6b65357c89200a926cc1b9`
+was published by the existing main-only
+[run 43471141747](https://github.com/stanimirivanov/kryvola-fabric/actions/runs/43471141747).
+All 17 downloaded assets passed Fabric's inventory/source/subject verifier and
+keyless publisher verification, followed by Platform's complete three-component
+admission. `config/m1.lock.json` records every exact hash and immutable URL.
+The manifest SHA-256 is
+`989df35edc80991b3a37feb28831949478f0099bfdfca49693f0795b363567af`;
+the runtime archive is
+`08ddd2f932f0e61d7cb5eafd7aa47014b86d1e8addd4668a88c581f96d04111a`;
+the owner archive is
+`8c7a4e0e0224ec54e0c028f2eabed6108cf9e16df868f1ce881c527ebeb01114`.
+Engines and ML pins, the frozen M0 environment, and the existing Spec
+compatibility assessment are unchanged. This publication includes the Ray/native
+RPC correction and the exact committed-release public lifecycle projection.
+The separate [real inference qualification](m1-inference.md) initializes actual
+owner custody, submits encrypted inputs, and verifies owner-local opening.

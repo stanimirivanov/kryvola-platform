@@ -407,3 +407,30 @@ The separate admission gate and frozen M0 checks remain required. No component
 release pin or approved Engine bytes changed. Real owner-to-owner inference is
 PR33. See [worker isolation](m1-isolation.md) and
 [ADR-0003](decisions/0003-compromised-worker-qualification.md).
+
+## M1-PR33 — real owner-to-owner encrypted inference, issue #56
+
+The local qualification now drives the installed published ML SDK through actual
+key-context registration, multipart artifact uploads, approval-bound admission,
+broker notification/inbox delivery, Temporal, Ray and the native CPU Engine. It
+checks signed receipt persistence, fenced selection, committed disclosure,
+public SDK release visibility, authorized artifact reads and owner-local opening
+against the frozen FHE-Q1 reference. All 100 plaintext reference cases are also
+checked inside the owner; one private random corpus pair runs through real TFHE.
+
+The owner uses actual Secret Service custody and the published native owner agent
+and wheel. A checksum-pinned helper-package closure supplies disposable headless
+keyring support. Operator adapters supply exact short-lived workload grants and
+bounded candidate metadata across the worker/workflow UID boundary. Owner keys
+and witness bytes remain local. Histories, broker records and complete bounded
+logs are inspected, including owner-private canaries and scanner negative controls.
+Public evidence binds release manifests, running images, the independently hashed
+Engine OCI configuration, execution/receipt/release identities and observed bounds.
+
+Fabric publication `9f16af4` resolves native Ray interoperability and the committed
+release lifecycle projection. All 17 assets passed source/inventory/provenance and
+keyless publisher verification before repinning; Engines/ML/Spec pins remain
+unchanged. Confidentiality-only consent, approvals, receipts, SDK opening and report
+remain explicit. Existing M0, startup, admission and isolation checks are retained.
+This qualifies local inference; production, performance promises and PR34+ fault
+campaigns remain outside this task. See [real inference](m1-inference.md).

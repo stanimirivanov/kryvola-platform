@@ -1,0 +1,342 @@
+{
+  "schema_version": "m1-owner-packages-v1",
+  "base_image": "python:3.14.7-trixie@sha256:0876e54cf728d89fd9d0fdaf5837b9ee879ea5fbbd6fd0cddbe5eb0cce3f5f9e",
+  "packages": [
+    {
+      "name": "gtk-update-icon-cache_4.18.6+ds-2_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/g/gtk4/gtk-update-icon-cache_4.18.6%2bds-2_amd64.deb",
+      "bytes": 52700,
+      "sha256": "88378a48ac07d253fb9bf0503dfbfbee2037ed9cd83eeff1df398801ab183125"
+    },
+    {
+      "name": "adwaita-icon-theme_48.1-1_all.deb",
+      "url": "https://deb.debian.org/debian/pool/main/a/adwaita-icon-theme/adwaita-icon-theme_48.1-1_all.deb",
+      "bytes": 504356,
+      "sha256": "f60b0577aee314d43d6908ca7f0b8f07dc48e2bb766e7e25035330817e0e827c"
+    },
+    {
+      "name": "at-spi2-common_2.56.2-1+deb13u2_all.deb",
+      "url": "https://deb.debian.org/debian/pool/main/a/at-spi2-core/at-spi2-common_2.56.2-1%2bdeb13u2_all.deb",
+      "bytes": 170748,
+      "sha256": "a2a7b53c9925ec33a471d56dd60f5effe35cece109ec4296cc8d98a1250213b4"
+    },
+    {
+      "name": "libdbus-1-3_1.16.2-2_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/d/dbus/libdbus-1-3_1.16.2-2_amd64.deb",
+      "bytes": 177904,
+      "sha256": "bbcb711daff7e104b5f80f9b05475b6142674bfe65518a36a56e96a91068a3f5"
+    },
+    {
+      "name": "dbus-bin_1.16.2-2_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/d/dbus/dbus-bin_1.16.2-2_amd64.deb",
+      "bytes": 80004,
+      "sha256": "a7c0785f89d3763bb83e2912237135a7d1c610e06f487c39b1d6408e88d46fb5"
+    },
+    {
+      "name": "dbus-session-bus-common_1.16.2-2_all.deb",
+      "url": "https://deb.debian.org/debian/pool/main/d/dbus/dbus-session-bus-common_1.16.2-2_all.deb",
+      "bytes": 52264,
+      "sha256": "98bd27836c7170839ed9c84b00daad9ed7155bd3d42e3f0ec3faf497aafa5f5f"
+    },
+    {
+      "name": "libapparmor1_4.1.0-1_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/a/apparmor/libapparmor1_4.1.0-1_amd64.deb",
+      "bytes": 43688,
+      "sha256": "4158976c77038b93021967f425b4cc505df18c4f5e3f444732399e7ed4af4419"
+    },
+    {
+      "name": "dbus-daemon_1.16.2-2_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/d/dbus/dbus-daemon_1.16.2-2_amd64.deb",
+      "bytes": 158660,
+      "sha256": "c91558cbd019bd5ec3e9fde0084976d5f61977f4ef0a9ed1ff48fe3a129b91d4"
+    },
+    {
+      "name": "dbus-x11_1.16.2-2_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/d/dbus/dbus-x11_1.16.2-2_amd64.deb",
+      "bytes": 65144,
+      "sha256": "7d06cc4b3f0c9e4761cdd64772cd86a845b11ab1fcd073caaf4c34b459dc7cd3"
+    },
+    {
+      "name": "libdconf1_0.40.0-5_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/d/dconf/libdconf1_0.40.0-5_amd64.deb",
+      "bytes": 41796,
+      "sha256": "6e7f670e1cf493ae8f60dea52f5a4aef56605d5b06d921113d7c2a2800ff5af1"
+    },
+    {
+      "name": "dconf-service_0.40.0-5_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/d/dconf/dconf-service_0.40.0-5_amd64.deb",
+      "bytes": 32364,
+      "sha256": "4a1feeda4605be8561ec32fb4d0655fbe2313e62e457107168f528d959b530b8"
+    },
+    {
+      "name": "dconf-gsettings-backend_0.40.0-5_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/d/dconf/dconf-gsettings-backend_0.40.0-5_amd64.deb",
+      "bytes": 28636,
+      "sha256": "393e8deffcc78d4396e860f10cb5e7d0aab448d6e0965add62941fcd27be00fb"
+    },
+    {
+      "name": "libgck-2-2_4.4.0.1-3_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/g/gcr4/libgck-2-2_4.4.0.1-3_amd64.deb",
+      "bytes": 73728,
+      "sha256": "c8551f68716bb0ea0335f55da40bda134023d73564b995be6267d4ff72a26889"
+    },
+    {
+      "name": "libgcr-4-4_4.4.0.1-3_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/g/gcr4/libgcr-4-4_4.4.0.1-3_amd64.deb",
+      "bytes": 203568,
+      "sha256": "09963a27f5e5f9a413844f4c00fe37efe4077b5d7359366c6cbc75c2c375d14d"
+    },
+    {
+      "name": "libcloudproviders0_0.3.6-2_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/libc/libcloudproviders/libcloudproviders0_0.3.6-2_amd64.deb",
+      "bytes": 29232,
+      "sha256": "a626bb23ed9ebc4bc3ce446b552048de63d76768bf0fb492754965c5ee28a7e4"
+    },
+    {
+      "name": "libcolord2_1.4.7-3_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/c/colord/libcolord2_1.4.7-3_amd64.deb",
+      "bytes": 139204,
+      "sha256": "f11fd3b492781122edf0790f1e1fe24c51a41c67d4bb76cff84a9426c5654fa7"
+    },
+    {
+      "name": "libavahi-common-data_0.8-16_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/a/avahi/libavahi-common-data_0.8-16_amd64.deb",
+      "bytes": 112284,
+      "sha256": "a3c0cb1326ed60cbbef133c31af28759f7a922d886d001a138d52bbf0af908d6"
+    },
+    {
+      "name": "libavahi-common3_0.8-16_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/a/avahi/libavahi-common3_0.8-16_amd64.deb",
+      "bytes": 44224,
+      "sha256": "fb092fc55f1c7f3db0ac64467f30ebae8145543570b8e99f17ce84cf1dd28bb6"
+    },
+    {
+      "name": "libavahi-client3_0.8-16_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/a/avahi/libavahi-client3_0.8-16_amd64.deb",
+      "bytes": 48384,
+      "sha256": "27df3f1c0190d13ec6d014c5515c2ec8e9a49d0983f48fc9e5756ee4e62d7e37"
+    },
+    {
+      "name": "libcups2t64_2.4.10-3+deb13u2_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/c/cups/libcups2t64_2.4.10-3%2bdeb13u2_amd64.deb",
+      "bytes": 251548,
+      "sha256": "278c57da32afceec1f406869e790b29f40c75b02bb8e512dd903d5a5264df9d2"
+    },
+    {
+      "name": "libepoxy0_1.5.10-2_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/libe/libepoxy/libepoxy0_1.5.10-2_amd64.deb",
+      "bytes": 192728,
+      "sha256": "4c4c8024f2175086de65bca9fdc3fbb967f2863ebf249d489c66d0c8103dd3a3"
+    },
+    {
+      "name": "libgraphene-1.0-0_1.10.8-5_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/g/graphene/libgraphene-1.0-0_1.10.8-5_amd64.deb",
+      "bytes": 42352,
+      "sha256": "ddcf98f17f6c0a7c76974d7238be1468e59c186034c1b806638d32d9f446ea6e"
+    },
+    {
+      "name": "libvulkan1_1.4.309.0-1_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/v/vulkan-loader/libvulkan1_1.4.309.0-1_amd64.deb",
+      "bytes": 130128,
+      "sha256": "f47da79cd140264fe21cceb08bc87a71bc7fec05819e4a421f3f518d21101a37"
+    },
+    {
+      "name": "libwayland-client0_1.23.1-3_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/w/wayland/libwayland-client0_1.23.1-3_amd64.deb",
+      "bytes": 26816,
+      "sha256": "d1607e1db1a7c5378a2e5c6ae7b20f64dc6acf134f953d84a7f5204b74339f33"
+    },
+    {
+      "name": "libwayland-egl1_1.23.1-3_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/w/wayland/libwayland-egl1_1.23.1-3_amd64.deb",
+      "bytes": 5860,
+      "sha256": "7c5c3429028b39b9432792db08cb218c43891df439ebc648b83ebee676a80ec5"
+    },
+    {
+      "name": "libxfixes3_1%3a6.0.0-2+b4_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/libx/libxfixes/libxfixes3_6.0.0-2%2bb4_amd64.deb",
+      "bytes": 20228,
+      "sha256": "3fdd95d86d8e9d63e11f52070935c8f9f912c36aa3b17338d969f7685f3ed4fb"
+    },
+    {
+      "name": "libxcursor1_1%3a1.2.3-1_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/libx/libxcursor/libxcursor1_1.2.3-1_amd64.deb",
+      "bytes": 39732,
+      "sha256": "bb0dbf58b804faaa74ed9efdae61c4b14bb0b4855680798f63e5ca6a4954976b"
+    },
+    {
+      "name": "libxdamage1_1%3a1.1.6-1+b2_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/libx/libxdamage/libxdamage1_1.1.6-1%2bb2_amd64.deb",
+      "bytes": 15460,
+      "sha256": "e51e43f23f3befbc1f9408271f4df6773d37caece9ce7e1f38abade382f7fbf7"
+    },
+    {
+      "name": "libxi6_2%3a1.8.2-1_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/libx/libxi/libxi6_1.8.2-1_amd64.deb",
+      "bytes": 78896,
+      "sha256": "093d0903f35bb7a9f6815180ee040e6951fecf9b66c128cd72f064710210606e"
+    },
+    {
+      "name": "libxinerama1_2%3a1.1.4-3+b4_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/libx/libxinerama/libxinerama1_1.1.4-3%2bb4_amd64.deb",
+      "bytes": 15992,
+      "sha256": "49d4e1628960407b8be2880a42428e7629801715a8a5697d42c0b0ca0a479911"
+    },
+    {
+      "name": "xkb-data_2.42-1_all.deb",
+      "url": "https://deb.debian.org/debian/pool/main/x/xkeyboard-config/xkb-data_2.42-1_all.deb",
+      "bytes": 789736,
+      "sha256": "196ff18533382f64e057ea49df2bb486bd4275a4cc0917361edb560b8756dada"
+    },
+    {
+      "name": "libxkbcommon0_1.7.0-2_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/libx/libxkbcommon/libxkbcommon0_1.7.0-2_amd64.deb",
+      "bytes": 112700,
+      "sha256": "f75ee544f55acc6a271debfab3ea4ae0458afc89d81cfe1a71137e07d4895b86"
+    },
+    {
+      "name": "libxrandr2_2%3a1.5.4-1+b3_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/libx/libxrandr/libxrandr2_1.5.4-1%2bb3_amd64.deb",
+      "bytes": 36312,
+      "sha256": "11e3490de93a8bbee3daba719cb8e1325a26fb3c125525c34bdcb7deb05eb9b2"
+    },
+    {
+      "name": "libglvnd0_1.7.0-1+b2_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/libg/libglvnd/libglvnd0_1.7.0-1%2bb2_amd64.deb",
+      "bytes": 51960,
+      "sha256": "887f74008166549ce9e100c906aa937e95d6e5ce1c8d86efe8c95fd953359b9c"
+    },
+    {
+      "name": "libgles2_1.7.0-1+b2_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/libg/libglvnd/libgles2_1.7.0-1%2bb2_amd64.deb",
+      "bytes": 17256,
+      "sha256": "e12c18aa77939d122ee1dea520ba0440b97dc19200b7396e03dff03a3ece74c1"
+    },
+    {
+      "name": "libgtk-4-common_4.18.6+ds-2_all.deb",
+      "url": "https://deb.debian.org/debian/pool/main/g/gtk4/libgtk-4-common_4.18.6%2bds-2_all.deb",
+      "bytes": 2797392,
+      "sha256": "32f0ad042f983b1d53cd2c260d4042eda9041b6debb71beb91937196b1ff3f6b"
+    },
+    {
+      "name": "libgtk-4-1_4.18.6+ds-2_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/g/gtk4/libgtk-4-1_4.18.6%2bds-2_amd64.deb",
+      "bytes": 3166640,
+      "sha256": "51ab1114a57702e703cce745c24caf5bd31ec1d2a900c72fd15fe47c6c030e68"
+    },
+    {
+      "name": "libsecret-common_0.21.7-1_all.deb",
+      "url": "https://deb.debian.org/debian/pool/main/libs/libsecret/libsecret-common_0.21.7-1_all.deb",
+      "bytes": 27936,
+      "sha256": "ce336a4ea6d27bfe85c195b88ab9a8eb95ce197228648634b8ace35ddb9bd808"
+    },
+    {
+      "name": "libsecret-1-0_0.21.7-1_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/libs/libsecret/libsecret-1-0_0.21.7-1_amd64.deb",
+      "bytes": 111224,
+      "sha256": "949c5428cd3427486ac6c4dfc6d9400ce786c504c02334acc903c873aa52d14f"
+    },
+    {
+      "name": "gcr4_4.4.0.1-3_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/g/gcr4/gcr4_4.4.0.1-3_amd64.deb",
+      "bytes": 200688,
+      "sha256": "f1e2293d7e62383b2a275e4a04ad8eab130d8c35645ec3b04936158221722bf6"
+    },
+    {
+      "name": "libgck-1-0_3.41.2-3_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/g/gcr/libgck-1-0_3.41.2-3_amd64.deb",
+      "bytes": 76132,
+      "sha256": "dd2d940427cf3215e8aa23647c2524d347597d72d723a292402d741936fe92f9"
+    },
+    {
+      "name": "libgcr-base-3-1_3.41.2-3_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/g/gcr/libgcr-base-3-1_3.41.2-3_amd64.deb",
+      "bytes": 199480,
+      "sha256": "2025724cb3df76d020c61d07d77d674df1f7d502db939cde7bed9d45a3b12923"
+    },
+    {
+      "name": "libatk1.0-0t64_2.56.2-1+deb13u2_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/a/at-spi2-core/libatk1.0-0t64_2.56.2-1%2bdeb13u2_amd64.deb",
+      "bytes": 51996,
+      "sha256": "24786bc90e3ff80c4d1d8bdb5ec18bb5f06df9081a5233eb080f3202fcf6a1c3"
+    },
+    {
+      "name": "libatspi2.0-0t64_2.56.2-1+deb13u2_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/a/at-spi2-core/libatspi2.0-0t64_2.56.2-1%2bdeb13u2_amd64.deb",
+      "bytes": 81056,
+      "sha256": "65e9c9ecbd820fba2d04104cddd0bad33d256cbdfe0d1cb5365f10e363df2315"
+    },
+    {
+      "name": "libatk-bridge2.0-0t64_2.56.2-1+deb13u2_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/a/at-spi2-core/libatk-bridge2.0-0t64_2.56.2-1%2bdeb13u2_amd64.deb",
+      "bytes": 68516,
+      "sha256": "c0fe87ea1bdca2f938eaa8286af5ad38ecd15cf18c6cfb5961d7d46ac3192325"
+    },
+    {
+      "name": "libwayland-cursor0_1.23.1-3_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/w/wayland/libwayland-cursor0_1.23.1-3_amd64.deb",
+      "bytes": 11880,
+      "sha256": "26fccae2b1228744de0cad6c688550b8d13cd4e8d4ccf0cfdae015634ece673f"
+    },
+    {
+      "name": "libxcomposite1_1%3a0.4.6-1_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/libx/libxcomposite/libxcomposite1_0.4.6-1_amd64.deb",
+      "bytes": 16348,
+      "sha256": "20e3c1d9b2135f0c8c4246a9fd26a51a57d5850c3b36ecc173c45d6be7328af3"
+    },
+    {
+      "name": "libgtk-3-common_3.24.49-3_all.deb",
+      "url": "https://deb.debian.org/debian/pool/main/g/gtk%2b3.0/libgtk-3-common_3.24.49-3_all.deb",
+      "bytes": 4908188,
+      "sha256": "9161bd6b9933384073ac5bacd6a3bb1e2998877a605411d73041fb0b7fadd605"
+    },
+    {
+      "name": "libgtk-3-0t64_3.24.49-3_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/g/gtk%2b3.0/libgtk-3-0t64_3.24.49-3_amd64.deb",
+      "bytes": 2768812,
+      "sha256": "4aa8828f01365f937f3bf69f812c8107ee4c8a2b208ffdd7656e8de5de81d98f"
+    },
+    {
+      "name": "libgcr-ui-3-1_3.41.2-3_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/g/gcr/libgcr-ui-3-1_3.41.2-3_amd64.deb",
+      "bytes": 132228,
+      "sha256": "247e49d1c6e4d04061d32cceef70b1d38f97808795735c82e95d525af28565b4"
+    },
+    {
+      "name": "gcr_3.41.2-3_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/g/gcr/gcr_3.41.2-3_amd64.deb",
+      "bytes": 259872,
+      "sha256": "b4323ee167fa574fab34335afcdb14e8b03f29cfe20a3d85231d3af00c4cde63"
+    },
+    {
+      "name": "p11-kit-modules_0.25.5-3_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/p/p11-kit/p11-kit-modules_0.25.5-3_amd64.deb",
+      "bytes": 271020,
+      "sha256": "9d7c6fd38295115bfbe8ef56bd593a3f50ded285182ab0eeff218d43addb69d8"
+    },
+    {
+      "name": "p11-kit_0.25.5-3_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/p/p11-kit/p11-kit_0.25.5-3_amd64.deb",
+      "bytes": 403156,
+      "sha256": "3b048929b011eab66ad30cf888060456281b12a0e2fce2e17dc62906947d0835"
+    },
+    {
+      "name": "pinentry-gnome3_1.3.1-2_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/p/pinentry/pinentry-gnome3_1.3.1-2_amd64.deb",
+      "bytes": 88560,
+      "sha256": "4a42b48b91af6bbe1ad94ea2e83de4f184fe126c5a13e93a0a945d9fdb8b3774"
+    },
+    {
+      "name": "gnome-keyring_48.0-1_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/g/gnome-keyring/gnome-keyring_48.0-1_amd64.deb",
+      "bytes": 710540,
+      "sha256": "efcfab150b9841aecfe5311e3987bfcba73ac7cbc72e157529f0f8cc6281f8ce"
+    },
+    {
+      "name": "libsecret-tools_0.21.7-1_amd64.deb",
+      "url": "https://deb.debian.org/debian/pool/main/libs/libsecret/libsecret-tools_0.21.7-1_amd64.deb",
+      "bytes": 13952,
+      "sha256": "1b9a6f4c53cedaa796e9090f1e8d1916031d60262515c8c1a4eeb5245fc8233e"
+    }
+  ]
+}

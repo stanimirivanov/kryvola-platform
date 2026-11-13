@@ -67,7 +67,7 @@ def create(folder):
             "region": "us-east-1",
             "access_key_id": access,
             "secret_access_key": secret,
-            "tenant_quota_bytes": 1048576,
+            "tenant_quota_bytes": 128 << 20,
             "allow_http": True,
         },
     )
