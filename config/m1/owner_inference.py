@@ -156,6 +156,7 @@ def prepare(engine_digest, request_id=None):
     context = fixture("canonical-corpus.json", "key-context")
     if request_id is not None:
         operation["operation_id"] += "-" + request_id
+        operation["idempotency_key"] = "m1-admission-" + request_id
         operation["logical_job_id"] = "m1-job-" + request_id
         operation["disclosure_identity"]["logical_job_id"] = operation["logical_job_id"]
         operation["plan_ref"]["plan_id"] = "m1-plan-" + request_id
