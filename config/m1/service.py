@@ -12,10 +12,35 @@ import ssl
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 STATE = Path("/run/m1-state")
 SECRETS = Path("/run/m1-secrets")
+
+
+def recovery_barrier(action, edge):
+    """Owned qualification barrier around the real call, never a fake result."""
+    path = STATE / "recovery.json"
+    if not path.exists():
+        return
+    value = json.loads(path.read_bytes())
+    if value != {"action": action, "edge": edge}:
+        return
+    marker = STATE / "barrier-reached"
+    if marker.exists():  # A restarted worker must retry the published operation.
+        return
+    # The controller observes concurrently; publish only complete JSON.
+    with tempfile.TemporaryDirectory(dir=STATE) as folder:
+        pending = Path(folder) / "marker"
+        pending.write_text(json.dumps(value))
+        pending.chmod(0o644)
+        pending.replace(marker)
+    until = time.monotonic() + 25
+    while not (STATE / "barrier-release").exists():
+        if time.monotonic() >= until:
+            raise OSError("M1_RECOVERY_BARRIER_TIMEOUT")
+        time.sleep(0.02)
 
 
 def ready(role):
@@ -183,7 +208,26 @@ async def workflow():
         return json.loads((SECRETS / "tokens.json").read_bytes()).get(action, "")
 
     registry = Registry("runtime", 8443, tls("workflow"), "spiffe://m1.test/runtime", credential)
-    dispatcher = RayDispatcher(local_jobs(), local_candidates(STATE / "candidates"))
+    original_call = registry.call
+
+    def registry_call(action, *args, **kwargs):
+        recovery_barrier(action, "before")
+        result = original_call(action, *args, **kwargs)
+        recovery_barrier(action, "after")
+        return result
+
+    registry.call = registry_call
+    jobs = local_jobs()
+
+    def dispatch_call(method, path, body):
+        if method == "POST":
+            recovery_barrier("SUBMIT", "before")
+        result = jobs(method, path, body)
+        if method == "POST":
+            recovery_barrier("SUBMIT", "after")
+        return result
+
+    dispatcher = RayDispatcher(dispatch_call, local_candidates(STATE / "candidates"))
     activities = ComputeActivities(registry, dispatcher)
     # The native coordinator rejects group/world-readable CLI credentials.
     # Keep operator inputs read-only and copy them into this workflow UID's

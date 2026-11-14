@@ -87,6 +87,17 @@ def main() -> None:
                 "live_m1_inference.py",
                 "-v",
             )
+            run(
+                sys.executable,
+                "-m",
+                "unittest",
+                "discover",
+                "-s",
+                "tests",
+                "-p",
+                "live_m1_recovery.py",
+                "-v",
+            )
             run(sys.executable, "tools/m1_cluster.py", "ci")
             run(sys.executable, "tools/m1_isolation_local.py")
             run(sys.executable, "tools/m1_isolation_cluster.py")

@@ -434,3 +434,22 @@ unchanged. Confidentiality-only consent, approvals, receipts, SDK opening and re
 remain explicit. Existing M0, startup, admission and isolation checks are retained.
 This qualifies local inference; production, performance promises and PR34+ fault
 campaigns remain outside this task. See [real inference](m1-inference.md).
+
+## M1-PR34 — execution and transport recovery, issue #58
+
+The published-artifact harness adds a fixed 16-case execution/transport campaign:
+duplicate, missing and reordered notifications; dispatch-bridge and native-worker
+death; lost activity completion; corrupted and oversized artifacts. Cases cover
+the documented before/after commit or acknowledgement boundaries using real
+process death, PostgreSQL locks, Kafka records and object-store mutations. A
+thrown error alone cannot qualify a fault: terminal workflow history, SQL state,
+immutable-object observations and live retention pins must agree.
+
+Evidence binds the exact source/harness/lock/release pins, distinct physical
+executions, at most one current selection and disclosure, bounded histories and
+host/owner-private log audits. CI runs four independent groups and requires their
+complete verified union; diagnostic segments remain explicitly unqualified.
+Existing startup, inference, admission, isolation and frozen M0 gates remain.
+No component publication or production/release policy changes. See
+[execution and transport recovery](m1-recovery.md) for exact boundaries, commands
+and unqualified failures; cancellation/disclosure races remain M1-PR35.
