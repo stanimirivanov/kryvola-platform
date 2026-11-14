@@ -35,6 +35,16 @@ timeout or changing fault assertions. The failed hosted run did not retain enoug
 service diagnostics to attribute the original transport stall to a specific
 backend failure.
 
+Dispatch, selection and post-publication worker barriers are watched by a
+dedicated controller thread started before notification handoff. It verifies the
+existing SQL/Jobs/native-state boundary, kills the real container, and verifies
+its exit before restarting or releasing the barrier. The main observer exports
+real candidates while waiting, then reads history after the verified restart.
+This prevents a slow history RPC from consuming the selection activity's
+ten-second deadline and missing its first attempt. The live durability gate
+deliberately delays one post-candidate history read by sixteen seconds; it still
+requires the kill, activity retry, one selection and one disclosure.
+
 ## Fault boundaries and required outcomes
 
 | Fault | Before | After | Required corroboration |

@@ -656,6 +656,44 @@ def refresh_unspent(operator, hashes):
     operator.save()
 
 
+def kill_at_barrier(stack, actual, config, stopping, *, worker=False):
+    """Observe independently of potentially slow handoff/history RPCs."""
+    marker = stack.folder / "workflow-state/barrier-reached"
+    state_at_fault = None
+    until = time.monotonic() + 75
+    while not stopping.is_set() and time.monotonic() < until:
+        if marker.exists():
+            require(json.loads(marker.read_bytes()) == config)
+            if config["action"] == "SELECT" and not worker:
+                count = int(stack.sql("SELECT count(*) FROM fabric_selected_results"))
+                require(count == (1 if config["edge"] == "after" else 0))
+            if config["action"] == "SUBMIT":
+                count = json.loads(
+                    stack.execute(
+                        "workflow",
+                        "python",
+                        "-c",
+                        "import json,sys;"
+                        "from kryvola_fabric.ray_dispatch import local_jobs;"
+                        "r=local_jobs();print(json.dumps(r('GET','/api/jobs/'+sys.argv[1],None)))",
+                        actual["namespace"],
+                    )
+                )
+                require((count is None) == (config["edge"] == "before"))
+            if worker:
+                require(stack.sql("SELECT count(*) FROM fabric_selected_results").strip() == b"0")
+                state_at_fault = native_status(stack, actual)
+                require(state_at_fault == {"physical_state": "SUCCEEDED", "error_code": "NONE"})
+                kill(stack, "engine")
+                (stack.folder / "workflow-state/barrier-release").touch()
+            else:
+                kill(stack, "workflow")
+                start(stack, "workflow")
+            return state_at_fault
+        stopping.wait(0.02)
+    raise ValueError("M1_RECOVERY_MISSING_BOUNDARY")
+
+
 def kill_at_receipt(stack, actual, lock, stopping):
     # Poll on the already-open SQL session. Docker/Temporal CLI startup must not
     # consume the published Engine's five-second HTTP deadline before SIGKILL.
@@ -810,69 +848,59 @@ def run_case(case):
                     raise ValueError("M1_RECOVERY_BARRIER")
                 monitor = ThreadPoolExecutor(max_workers=1)
                 pending_kill = monitor.submit(kill_at_receipt, stack, actual, lock, stopping)
-            starts = handoff(stack, records, overlap=kind == "duplicate" and side == "before")
+            barrier_fault = kind in {"bridge", "completion"} or (
+                kind == "worker" and side == "after"
+            )
+            if barrier_fault:
+                monitor = ThreadPoolExecutor(max_workers=1)
+                pending_kill = monitor.submit(
+                    kill_at_barrier, stack, actual, config, stopping, worker=kind == "worker"
+                )
+            try:
+                starts = handoff(stack, records, overlap=kind == "duplicate" and side == "before")
+            except subprocess.CalledProcessError as error:
+                # Killing workflow also terminates a still-running exec client.
+                # Retry only after this case's monitor verifies the intended kill
+                # and restarts the role; all other handoff failures propagate.
+                if not barrier_fault or error.returncode != 137 or pending_kill is None:
+                    raise
+                pending_kill.result(timeout=20)
+                starts = handoff(stack, records)
+
             live.phase("RECOVERY_STARTED")
             identifier = starts[0]
             require(identifier == "compute-" + actual["execution_id"][5:])
             if kind == "duplicate":
                 observed = starts == [identifier, identifier] if side == "before" else True
-            marker = stack.folder / "workflow-state/barrier-reached"
             released = False
             exported = False
             until = time.monotonic() + 75
             while time.monotonic() < until:
                 if pending_kill is not None and pending_kill.done() and not killed:
-                    state_at_fault = finish_worker_kill(pending_kill)
-                    killed = observed = True
-                    if lock is None:
-                        raise ValueError("M1_RECOVERY_BARRIER")
-                    lock.close()
-                    lock = None
-                    live.phase("RECOVERY_KILLED_RUNNING_WORKER")
-                if (
-                    (kind in {"bridge", "completion"} or (kind == "worker" and side == "after"))
-                    and marker.exists()
-                    and not killed
-                ):
-                    require(json.loads(marker.read_bytes()) == config)
-                    if kind == "completion":
-                        count = int(stack.sql("SELECT count(*) FROM fabric_selected_results"))
-                        require(count == (1 if side == "after" else 0))
-                    if kind == "bridge":
-                        count = json.loads(
-                            stack.execute(
-                                "workflow",
-                                "python",
-                                "-c",
-                                "import json,sys;"
-                                "from kryvola_fabric.ray_dispatch import local_jobs;"
-                                "r=local_jobs();print(json.dumps(r('GET','/api/jobs/'+sys.argv[1],None)))",
-                                actual["namespace"],
-                            )
-                        )
-                        require((count is None) == (side == "before"))
-                    if kind == "worker":
-                        require(
-                            stack.sql("SELECT count(*) FROM fabric_selected_results").strip()
-                            == b"0"
-                        )
-                        state_at_fault = native_status(stack, actual)
-                        require(
-                            state_at_fault == {"physical_state": "SUCCEEDED", "error_code": "NONE"}
-                        )
-                        kill(stack, "engine")
-                        (stack.folder / "workflow-state/barrier-release").touch()
+                    if barrier_fault:
+                        state = pending_kill.result()
+                        if state is not None:
+                            state_at_fault = state
+                        live.phase("RECOVERY_KILLED")
                     else:
-                        kill(stack, "workflow")
-                        start(stack, "workflow")
+                        state_at_fault = finish_worker_kill(pending_kill)
+                        if lock is None:
+                            raise ValueError("M1_RECOVERY_BARRIER")
+                        lock.close()
+                        lock = None
+                        live.phase("RECOVERY_KILLED_RUNNING_WORKER")
                     killed = observed = True
-                    live.phase("RECOVERY_KILLED")
                 if not exported:
                     try:
                         export_candidate(stack, actual)
                         exported = True
                     except subprocess.SubprocessError:
                         pass
+                if barrier_fault and not killed:
+                    # History executes in the role being killed. Wait for the
+                    # verified restart before reading it; export can continue.
+                    stopping.wait(0.02)
+                    continue
                 workflow_history = history(stack, identifier)
                 if workflow_history["status"] in {"COMPLETED", "FAILED"}:
                     if pending_kill is not None and not killed:

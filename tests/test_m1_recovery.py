@@ -5,6 +5,65 @@ import unittest
 
 
 class RecoveryEvidenceTests(unittest.TestCase):
+    def test_boundary_marker_is_never_visible_as_partial_json(self):
+        import importlib.util
+        import json
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+
+        from tools import m1
+
+        spec = importlib.util.spec_from_file_location("fixture", m1.ROOT / "config/m1/service.py")
+        assert spec is not None and spec.loader is not None
+        fixture = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(fixture)
+        with tempfile.TemporaryDirectory() as folder, patch.dict(fixture.__dict__):
+            fixture.__dict__["STATE"] = Path(folder)
+            config = {"action": "SELECT", "edge": "after"}
+            (fixture.STATE / "recovery.json").write_text(json.dumps(config))
+            (fixture.STATE / "barrier-release").touch()
+            marker = fixture.STATE / "barrier-reached"
+            observed = []
+
+            def partial_write(path, text):
+                with path.open("w") as stream:
+                    stream.write(text[:1])
+                    stream.flush()
+                    observed.append(marker.read_bytes() if marker.exists() else None)
+                    stream.write(text[1:])
+                return len(text)
+
+            with patch.object(Path, "write_text", partial_write):
+                fixture.recovery_barrier("SELECT", "after")
+            self.assertEqual(observed, [None])
+            self.assertEqual(json.loads(marker.read_bytes()), config)
+
+    def test_missing_or_wrong_selection_boundary_never_triggers_a_kill(self):
+        import json
+        import tempfile
+        import threading
+        from pathlib import Path
+        from unittest.mock import Mock
+
+        from tools.m1_recovery import kill_at_barrier
+
+        with tempfile.TemporaryDirectory() as folder:
+            stack = Mock(folder=Path(folder))
+            state = stack.folder / "workflow-state"
+            state.mkdir()
+            config = {"action": "SELECT", "edge": "after"}
+            stop = threading.Event()
+            stop.set()
+            with self.assertRaisesRegex(ValueError, "M1_RECOVERY_MISSING_BOUNDARY"):
+                kill_at_barrier(stack, {}, config, stop)
+            stop.clear()
+            (state / "barrier-reached").write_text(json.dumps(config))
+            stack.sql.return_value = b"0"
+            with self.assertRaisesRegex(ValueError, "M1_RECOVERY_EVIDENCE"):
+                kill_at_barrier(stack, {}, config, stop)
+            stack.compose.assert_not_called()
+
     def test_campaign_covers_both_sides_of_every_named_fault(self):
         from tools.m1_recovery import CASES
 

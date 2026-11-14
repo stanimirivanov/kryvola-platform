@@ -30,7 +30,12 @@ def recovery_barrier(action, edge):
     marker = STATE / "barrier-reached"
     if marker.exists():  # A restarted worker must retry the published operation.
         return
-    marker.write_text(json.dumps(value))
+    # The controller observes concurrently; publish only complete JSON.
+    with tempfile.TemporaryDirectory(dir=STATE) as folder:
+        pending = Path(folder) / "marker"
+        pending.write_text(json.dumps(value))
+        pending.chmod(0o644)
+        pending.replace(marker)
     until = time.monotonic() + 25
     while not (STATE / "barrier-release").exists():
         if time.monotonic() >= until:
