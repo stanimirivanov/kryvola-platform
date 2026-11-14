@@ -114,6 +114,8 @@ def validate_case(value):
         require(value["before"]["disclosures"] == 0)
         if case in {"cancel-transaction", "registry-outage"}:
             require(value["checks"]["no_early_ack"] is True)
+        if case == "cancel-before":
+            require(value["checks"]["admission_svid_age_ms"] >= 50000)
     elif case == "revoke-before":
         require(value["checks"]["revoked"] is True and value["selections"] == 1)
         require(value["disclosures"] == 0 and value["workflow_status"] == "FAILED")
@@ -132,6 +134,7 @@ def validate_case(value):
         if case == "rollover-recovery":
             require(value["workflow_runs"] == 2 and value["fence"] >= 2)
             require(value["checks"]["successor_epoch"] == "2" and value["stale_status"] == 409)
+            require(value["checks"]["replacement_status"] == 409)
     return value
 
 
@@ -140,6 +143,7 @@ def bindings():
         "tools/m1_disclosure.py",
         "tools/m1_inference.py",
         "tools/m1_recovery.py",
+        "tools/m1_identity.py",
         "config/m1/owner_inference.py",
         "config/m1/service.py",
         "compose.m1.yaml",
@@ -472,8 +476,15 @@ def run_case(case):
         require(prepared["stage"] == "PREPARED")
         operator = live.Operator(stack, prepared)
         require(owner_reply(owner, operator)["stage"] == "ADMITTED")
+        admitted_at = time.monotonic()
         live.phase("DISCLOSURE_ADMITTED:" + case)
         actual = live.provision(stack, operator, locked)
+        if case == "cancel-before":
+            # The public client was created at admission with a 45-second SVID.
+            # Delay before dispatch so activity timers are unaffected. Reissue
+            # only unspent execution capabilities below, never owner grants.
+            time.sleep(50)
+            checks["admission_svid_age_ms"] = int((time.monotonic() - admitted_at) * 1000)
         pending = {
             g["token_sha256"]
             for lane in ("registry_grants", "grants", "output_grants", "receipt_grants")
@@ -503,7 +514,7 @@ def run_case(case):
             paused = False
         if case.startswith("cancel-") or case == "registry-outage":
             if case == "cancel-transaction":
-                lock = recovery.DatabaseLock(stack, "fabric_operations")
+                lock = recovery.DatabaseLock(stack, "fabric_operation_barriers")
                 locks.callback(lock.close)
                 with ThreadPoolExecutor(max_workers=1) as pool:
                     response = pool.submit(cancel, owner, operator)
@@ -514,7 +525,7 @@ def run_case(case):
                             stack.sql(
                                 "SELECT count(*) FROM pg_stat_activity "
                                 "WHERE wait_event_type='Lock' "
-                                "AND query LIKE '%fabric_operations%' AND query LIKE '%FOR UPDATE%'"
+                                "AND query LIKE '%fabric_operation_barriers%'"
                             )
                         )
 
@@ -652,8 +663,11 @@ def run_case(case):
                         / "candidate.json"
                     ).read_bytes()
                 )
-                candidate["output_manifest_digest"] = "0" * 64
                 stale_status = role(
+                    stack, op="request", action="SELECT", path="/v1/results/select", body=candidate
+                )["status"]
+                candidate["output_manifest_digest"] = "0" * 64
+                checks["replacement_status"] = role(
                     stack, op="request", action="SELECT", path="/v1/results/select", body=candidate
                 )["status"]
 

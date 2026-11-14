@@ -406,6 +406,7 @@ def main():
             audit()
             return
         if mode == ["disclosure"] and released.get("command") == "cancel":
+            client.tls = service.tls("owner")
             lifecycle = importlib.import_module("kryvola_ml.sdk.lifecycle").Lifecycle(
                 client, state["operation"]
             )

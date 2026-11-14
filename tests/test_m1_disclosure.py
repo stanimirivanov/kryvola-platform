@@ -70,7 +70,7 @@ class DisclosureEvidenceTests(unittest.TestCase):
             "logs_clean": True,
             "boundary_observed": True,
             "before": {"ledger": ledger},
-            "checks": {"opened": True, "successor_epoch": "2"},
+            "checks": {"opened": True, "successor_epoch": "2", "replacement_status": 409},
             "ledger": ledger,
             "workflow_runs": 2,
         }
@@ -85,6 +85,11 @@ class DisclosureEvidenceTests(unittest.TestCase):
             changed[key] = bad
             with self.subTest(key=key), self.assertRaises(ValueError):
                 validate_case(changed)
+
+        changed = copy.deepcopy(value)
+        changed["checks"]["replacement_status"] = 200
+        with self.assertRaises(ValueError):
+            validate_case(changed)
 
     def test_cancel_ack_requires_committed_fencing_and_no_new_release(self):
         from tools.m1_disclosure import validate_case
@@ -106,7 +111,7 @@ class DisclosureEvidenceTests(unittest.TestCase):
             "logs_clean": True,
             "boundary_observed": True,
             "before": {"selections": 0, "disclosures": 0},
-            "checks": {},
+            "checks": {"admission_svid_age_ms": 50000},
             "ledger": [],
             "workflow_runs": 1,
         }
@@ -124,6 +129,11 @@ class DisclosureEvidenceTests(unittest.TestCase):
             changed[key] = bad
             with self.subTest(key=key), self.assertRaises(ValueError):
                 validate_case(changed)
+
+        changed = copy.deepcopy(value)
+        changed["checks"]["admission_svid_age_ms"] = 0
+        with self.assertRaises(ValueError):
+            validate_case(changed)
 
     def test_impossible_oracle_transition_is_rejected(self):
         from tools.m1_disclosure import check_trace

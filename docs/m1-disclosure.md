@@ -18,21 +18,26 @@ existing Apache-2.0 state-model pattern requires no new dependency. Model epoch
 zero denotes the installed workflow's first epoch (one); physical execution
 names are abstracted to the model's first execution. Oracle agreement is bounded
 test evidence, not cryptographic proof or a production guarantee.
+`cancel-request` projects request initiation, not a required HTTP 202 response.
+`verify` projects native signed-receipt/authorization checks, never public
+`EVIDENCE_VERIFIED` or a compute proof. `reconcile` projects independent SQL
+read-back of the fenced durable state; no unexecuted workflow readmission is
+inserted into a trace.
 
 ## Cases and evidence
 
 | Case | Real boundary and required outcome |
 |---|---|
-| cancel-before | Hold selection before SQL commit. The public owner SDK acknowledges only a committed fence; old-fence selection returns 409, and selection/disclosure counts remain zero. |
+| cancel-before | Age the admission client beyond the configured 45-second SVID lifetime before dispatch. Refresh its real identity for cancellation while selection is held before SQL commit; require a committed fence, rejection of old-fence selection, and no selection/disclosure. |
 | cancel-after | Hold selection after its commit, before its activity acknowledgement. Winning cancellation retires the attempt and prevents a disclosure despite the retained selection. |
-| cancel-transaction | Lock the actual operation table, observe the cancellation SQL waiter and absence of acknowledgement, then release the transaction and require committed fencing before acknowledgement. |
+| cancel-transaction | Lock the empty operation-barrier table, observe the cancellation SQL waiter and absence of acknowledgement, then release the transaction and require committed fencing before acknowledgement. |
 | registry-outage | Pause the actual runtime while the owner calls cancellation. No acknowledgement or fence can appear while it is unavailable. Unpause and reconcile the same idempotency key through the public SDK. |
 | admin-terminate | At committed selection, use the published fence-first administrative recovery helper, actual Ray cleanup and Temporal termination. Require the fence and rejection of the stale candidate. |
 | release-before-cancel | Open a legitimately released result inside the owner before cancellation. Fencing preserves the one existing disclosure identity and output; it cannot retract bytes already disclosed. |
 | revoke-before | Revoke the actual signed approval using the native coordinator command while selection acknowledgement is held. Release fails with no disclosure. |
 | revoke-after | Open the committed result, revoke its approval, then require a fresh authorized SDK fetch to fail. The historical disclosure remains immutable. |
 | owner-reconnect | Fetch real encrypted output, damage ciphertext or substitute its signature and require owner-local rejection. SIGSTOP the actual owner key-service process, verify its stopped state and require opening failure; SIGCONT and open the exact original result against the frozen reference. |
-| rollover-recovery | Signal the real workflow while prepare is held, require two Continue-As-New runs and one released output, then fence administrative recovery. A stale attempt proposing a different output must receive 409; the disclosure identity/output remain unchanged. |
+| rollover-recovery | Signal the real workflow while prepare is held, require two Continue-As-New runs and one released output, then fence administrative recovery. Independently reject the old valid candidate and a candidate proposing a different output; the disclosure identity/output remain unchanged. |
 
 Only owned, randomly named disposable Compose projects are affected. The worker
 never receives owner private keys or plaintext. Signed documents and bounded
