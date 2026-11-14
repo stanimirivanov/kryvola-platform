@@ -52,6 +52,15 @@ retry after genuine process death. Markers publish complete bytes atomically.
 Native runtime errors and missing evidence fail qualification; no exception by
 itself counts as successful fault injection.
 
+After the durable fence, cleanup and Temporal stopping may report partial
+delivery. The controller retries the same published idempotent command at most
+three times, requiring the same fence and both verified follow-up flags before
+qualification. Exhaustion fails the case. The cancellation CI group also pauses
+the real Ray service for the first cleanup request, observes the partial result,
+then unpauses it and requires convergence without another fence or disclosure.
+Run that regression independently with
+`uv run --locked python -m unittest discover -s tests -p live_m1_disclosure_followups.py -v`.
+
 ## Reports, gates and limits
 
 `build/m1-disclosure-report.json` binds source, harness, lock, exact component

@@ -106,6 +106,9 @@ def validate_case(value):
     require(value["executions"] == value["receipts"] == 1)
     require(len(value["ledger"]) == value["disclosures"])
     if case.startswith("cancel-") or case in {"registry-outage", "admin-terminate"}:
+        followups = value["checks"]["followups"]
+        require(followups["cleanup_complete"] is True and followups["temporal_stopped"] is True)
+        require(1 <= followups["reconciliation_attempts"] <= 3)
         require(value["fence"] >= 2 and value["retired"] >= 1 and value["acknowledged"] is True)
         require(value["stale_status"] == 409 and value["disclosures"] == 0)
         require(value["workflow_status"] in {"CANCELED", "TERMINATED", "FAILED"})
@@ -332,6 +335,25 @@ def cancel(owner, operator):
     return owner_reply(owner, operator)
 
 
+def reconcile_stop(call, *, expected_fence=None, outcome="CANCELLED"):
+    """Repeat the published idempotent fence-first command until its follow-ups agree."""
+    for attempt in range(1, 4):
+        result = call()
+        require(result["outcome"] == outcome)
+        fence = int(result["fence"])
+        require(fence >= 2 and (expected_fence is None or fence == expected_fence))
+        expected_fence = fence
+        flags = {key: result.get(key) for key in ("cleanup_complete", "temporal_stopped")}
+        live.phase(
+            "DISCLOSURE_FOLLOWUPS:" + json.dumps({"attempt": attempt, "fence": fence, **flags})
+        )
+        if all(flag is True for flag in flags.values()):
+            return {**result, "reconciliation_attempts": attempt}
+        if attempt < 3:
+            time.sleep(0.2)
+    raise ValueError("M1_DISCLOSURE_FOLLOWUPS_INCOMPLETE")
+
+
 def snapshot(stack):
     return json.loads(
         stack.sql("""
@@ -546,18 +568,28 @@ def run_case(case):
             require(int(reply["fence"]) == state["fence"] >= 2 and state["retired"] >= 1)
             acknowledged = True
             scope = issue(operator, "CANCEL", "CANCEL_OPERATION", actual)
-            stopped = role(
-                stack, op="stop", mode="cancel", scope=scope, namespace=actual["namespace"]
+            stopped = reconcile_stop(
+                lambda: role(
+                    stack, op="stop", mode="cancel", scope=scope, namespace=actual["namespace"]
+                ),
+                expected_fence=state["fence"],
             )
             require(
                 stopped["outcome"] == "CANCELLED"
                 and stopped["temporal_stopped"] is True
                 and stopped["cleanup_complete"] is True
             )
+            checks["followups"] = {
+                k: stopped[k]
+                for k in ("cleanup_complete", "temporal_stopped", "reconciliation_attempts")
+            }
         elif case == "admin-terminate":
             scope = issue(operator, "ADMIN_RECOVERY", "ADMIN_RECOVERY", actual)
-            stopped = role(
-                stack, op="stop", mode="terminate", scope=scope, namespace=actual["namespace"]
+            stopped = reconcile_stop(
+                lambda: role(
+                    stack, op="stop", mode="terminate", scope=scope, namespace=actual["namespace"]
+                ),
+                outcome="RECOVERY_FENCED",
             )
             require(
                 stopped["outcome"] == "RECOVERY_FENCED"
@@ -565,6 +597,10 @@ def run_case(case):
                 and stopped["cleanup_complete"] is True
             )
             require(snapshot(stack)["fence"] == int(stopped["fence"]) >= 2)
+            checks["followups"] = {
+                k: stopped[k]
+                for k in ("cleanup_complete", "temporal_stopped", "reconciliation_attempts")
+            }
             acknowledged = True
         elif case == "revoke-before":
             checks.update(

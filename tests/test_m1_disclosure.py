@@ -5,6 +5,43 @@ import unittest
 
 
 class DisclosureEvidenceTests(unittest.TestCase):
+    def test_fenced_followups_reconcile_partial_delivery_without_changing_fence(self):
+        from unittest.mock import Mock
+
+        from tools.m1_disclosure import reconcile_stop
+
+        partial = {
+            "outcome": "CANCELLED",
+            "fence": "2",
+            "cleanup_complete": False,
+            "temporal_stopped": True,
+        }
+        complete = {**partial, "cleanup_complete": True}
+        call = Mock(side_effect=[partial, complete])
+        result = reconcile_stop(call, expected_fence=2)
+        self.assertTrue(result["cleanup_complete"])
+        self.assertEqual(result["reconciliation_attempts"], 2)
+        self.assertEqual(call.call_count, 2)
+
+    def test_followup_exhaustion_or_changed_fencing_cannot_qualify(self):
+        from unittest.mock import Mock
+
+        from tools.m1_disclosure import reconcile_stop
+
+        partial = {
+            "outcome": "CANCELLED",
+            "fence": "2",
+            "cleanup_complete": True,
+            "temporal_stopped": False,
+        }
+        call = Mock(return_value=partial)
+        with self.assertRaises(ValueError):
+            reconcile_stop(call, expected_fence=2)
+        self.assertEqual(call.call_count, 3)
+        call = Mock(side_effect=[partial, {**partial, "fence": "3", "temporal_stopped": True}])
+        with self.assertRaises(ValueError):
+            reconcile_stop(call, expected_fence=2)
+
     def test_owner_probes_require_real_fetch_rejection_and_successful_reconnect(self):
         from tools.m1_disclosure import validate_case
 
@@ -111,7 +148,14 @@ class DisclosureEvidenceTests(unittest.TestCase):
             "logs_clean": True,
             "boundary_observed": True,
             "before": {"selections": 0, "disclosures": 0},
-            "checks": {"admission_svid_age_ms": 50000},
+            "checks": {
+                "admission_svid_age_ms": 50000,
+                "followups": {
+                    "cleanup_complete": True,
+                    "temporal_stopped": True,
+                    "reconciliation_attempts": 1,
+                },
+            },
             "ledger": [],
             "workflow_runs": 1,
         }
@@ -132,6 +176,10 @@ class DisclosureEvidenceTests(unittest.TestCase):
 
         changed = copy.deepcopy(value)
         changed["checks"]["admission_svid_age_ms"] = 0
+        with self.assertRaises(ValueError):
+            validate_case(changed)
+        changed = copy.deepcopy(value)
+        changed["checks"]["followups"]["cleanup_complete"] = False
         with self.assertRaises(ValueError):
             validate_case(changed)
 
