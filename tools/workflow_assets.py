@@ -6,6 +6,8 @@ import json
 import platform
 import re
 import tarfile
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -133,6 +135,29 @@ def engine():
     return path
 
 
+def download(url, expected):
+    """Retry transient transport failures; never retry or relax an integrity denial."""
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(url, timeout=60) as response:
+                raw = response.read((128 << 20) + 1)
+        except urllib.error.HTTPError as error:
+            if error.code not in {408, 429, 500, 502, 503, 504} or attempt == 2:
+                raise
+        except urllib.error.URLError as error:
+            if not isinstance(error.reason, (ConnectionError, TimeoutError)) or attempt == 2:
+                raise
+        except ConnectionError, TimeoutError:
+            if attempt == 2:
+                raise
+        else:
+            if len(raw) > 128 << 20 or hashlib.sha256(raw).hexdigest() != expected:
+                raise ValueError("WORKFLOW_DOWNLOAD_PIN")
+            return raw
+        time.sleep(0.25 * (attempt + 1))
+    raise ValueError("WORKFLOW_DOWNLOAD_PIN")
+
+
 def install():
     for role, component in pins().items():
         folder = OUTPUT / role
@@ -144,10 +169,7 @@ def install():
                     f"https://github.com/stanimirivanov/kryvola-{role}/releases/download/"
                     f"experimental-{component['source']}/" + urllib.parse.quote(name, safe="")
                 )
-                with urllib.request.urlopen(url, timeout=60) as response:
-                    raw = response.read((128 << 20) + 1)
-                if len(raw) > 128 << 20 or hashlib.sha256(raw).hexdigest() != expected:
-                    raise ValueError("WORKFLOW_DOWNLOAD_PIN")
+                raw = download(url, expected)
                 with path.open("xb") as stream:
                     stream.write(raw)
     verify()
