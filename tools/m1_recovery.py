@@ -5,6 +5,7 @@
 import base64
 import functools
 import hashlib
+import inspect
 import json
 import os
 import re
@@ -206,44 +207,139 @@ def notices(stack):
     )
 
 
-def handoff(stack, records, *, overlap=False):
-    """Same published bridge API as PR33, using actual bounded notification bytes."""
-    return json.loads(
-        stack.execute(
-            "workflow",
-            "python",
-            "-c",
-            r"""
-import asyncio, json, os, sys
-from temporalio.client import Client
-from kryvola_fabric.compute_activities import start_from_notification
-from kryvola_fabric.compute_workflow import DATA_CONVERTER
+async def deliver_notifications(
+    records, queue, *, overlap=False, connect=None, start=None, timeout=8, attempt_timeout=3
+):
+    """Bound transport setup/retries; ambiguous starts reuse the published workflow ID."""
+    import asyncio
+    import importlib
+    import json
+    from datetime import timedelta
+
+    from temporalio.service import RPCError, RPCStatusCode
+
+    if connect is None:
+        DATA_CONVERTER = importlib.import_module("kryvola_fabric.compute_workflow").DATA_CONVERTER
+        from temporalio.client import Client
+
+        async def connect():
+            return await Client.connect(
+                "temporal:7233",
+                data_converter=DATA_CONVERTER,
+                connect_timeout=timedelta(seconds=attempt_timeout),
+            )
+
+    if start is None:
+        start_from_notification = importlib.import_module(
+            "kryvola_fabric.compute_activities"
+        ).start_from_notification
+
+        class BoundedClient:
+            def __init__(self, client, budget):
+                self.client, self.budget = client, budget
+                self.data_converter = client.data_converter
+
+            async def start_workflow(self, *args, **kwargs):
+                return await self.client.start_workflow(
+                    *args, **kwargs, rpc_timeout=timedelta(seconds=self.budget)
+                )
+
+            def get_workflow_handle(self, *args, **kwargs):
+                return self.client.get_workflow_handle(*args, **kwargs)
+
+        async def start(client, task_queue, raw):
+            handle = await start_from_notification(
+                BoundedClient(client, attempt_timeout), task_queue, raw, ray=True, release=True
+            )
+            return None if handle is None else handle.id
+
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + timeout
+    while loop.time() < deadline:
+        phase = "connect"
+        try:
+            async with asyncio.timeout(min(attempt_timeout, deadline - loop.time())):
+                client = await connect()
+                phase = "start"
+
+                async def deliver(record, client=client):
+                    raw = json.dumps(record, sort_keys=True, separators=(",", ":")).encode()
+                    return await start(client, queue, raw)
+
+                if overlap:
+                    return await asyncio.gather(*(deliver(record) for record in records))
+                return [await deliver(record) for record in records]
+        except TimeoutError, OSError:
+            pass
+        except RPCError as error:
+            if error.status not in (RPCStatusCode.UNAVAILABLE, RPCStatusCode.DEADLINE_EXCEEDED):
+                raise
+        except RuntimeError:
+            # The SDK reports an unsuccessful eager transport connection this way.
+            if phase != "connect":
+                raise
+        remaining = deadline - loop.time()
+        if remaining > 0:
+            await asyncio.sleep(min(0.05, remaining))
+    raise ValueError("M1_HANDOFF_UNAVAILABLE")
 
 
-async def main():
-    c = await Client.connect("temporal:7233", data_converter=DATA_CONVERTER)
-    out = []
-    value = json.load(sys.stdin)
-
-    async def deliver(item):
-        h = await start_from_notification(
-            c, os.environ["M1_TASK_QUEUE"], json.dumps(item).encode(), ray=True, release=True
-        )
-        return None if h is None else h.id
-
-    if value["overlap"]:
-        out = await asyncio.gather(*(deliver(item) for item in value["records"]))
-    else:
-        for item in value["records"]:
-            out.append(await deliver(item))
-    print(json.dumps(out))
-
-
-asyncio.run(main())
-""",
-            payload=live.canonical({"records": records, "overlap": overlap}),
-        )
+def deadline_program(body, *, seconds=10):
+    require(0 < seconds <= 10)
+    # An OS deadline also bounds a native SDK connection that does not finish
+    # coroutine cancellation. Only this disposable exec process is terminated.
+    return (
+        "import signal\n"
+        "signal.signal(signal.SIGALRM, signal.SIG_DFL)\n"
+        f"signal.setitimer(signal.ITIMER_REAL, {seconds!r})\n" + body
     )
+
+
+def handoff(stack, records, *, overlap=False):
+    """Bound and retry the published idempotent start in the admitted role."""
+    program = deadline_program(
+        inspect.getsource(deliver_notifications)
+        + r"""
+import asyncio, json, os, sys
+value = json.load(sys.stdin)
+try:
+    result = asyncio.run(deliver_notifications(
+        value["records"], os.environ["M1_TASK_QUEUE"], overlap=value["overlap"]
+    ))
+except ValueError as error:
+    if str(error) != "M1_HANDOFF_UNAVAILABLE":
+        raise
+    sys.exit(75)
+print(json.dumps(result))
+"""
+    )
+    for _ in range(2):
+        try:
+            return json.loads(
+                stack.execute(
+                    "workflow",
+                    "python",
+                    "-c",
+                    program,
+                    payload=live.canonical({"records": records, "overlap": overlap}),
+                )
+            )
+        except subprocess.CalledProcessError as error:
+            if error.returncode not in (75, 128 + 14):
+                raise
+    # Keep only bounded service-state diagnostics, never container env or logs.
+    states = {}
+    for role in ("temporal", "workflow", "postgres"):
+        container = stack.compose("ps", "-a", "-q", role).decode().strip()
+        if container:
+            state = json.loads(
+                live.capture(
+                    ["docker", "inspect", "--format", "{{json .State}}", container], 64 << 10
+                )
+            )
+            states[role] = {k: state[k] for k in ("Running", "ExitCode", "OOMKilled")}
+    live.phase("HANDOFF_UNAVAILABLE:" + json.dumps(states, sort_keys=True))
+    raise ValueError("M1_HANDOFF_UNAVAILABLE")
 
 
 def history(stack, identifier):

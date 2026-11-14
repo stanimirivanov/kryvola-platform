@@ -23,6 +23,18 @@ owns its own isolated services and cleanup. Hosted profiles default to one stack
 per runner. Object HEAD checks use at most two concurrent clients within the
 existing S3-client memory limit.
 
+Notification handoff bounds Temporal connection and start RPC attempts to three
+seconds, with an eight-second retry budget. A ten-second OS deadline terminates
+only the disposable handoff process if native SDK cancellation stalls. The host
+retries that process once with the exact same notification; the published bridge's
+deterministic workflow ID and duplicate-rejection policy preserve reattachment.
+Non-transport failures propagate immediately. Exhausted transport retries fail the
+campaign and report only service running/exit/OOM state, never success evidence.
+This addresses the PR #59 artifact-job hang without increasing the outer Compose
+timeout or changing fault assertions. The failed hosted run did not retain enough
+service diagnostics to attribute the original transport stall to a specific
+backend failure.
+
 ## Fault boundaries and required outcomes
 
 | Fault | Before | After | Required corroboration |
