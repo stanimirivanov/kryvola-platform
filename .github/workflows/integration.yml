@@ -172,3 +172,56 @@ jobs:
           name: m1-complete-recovery-report
           path: build/m1-recovery-report.json
           retention-days: 7
+
+  m1-disclosure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [cancellation, identity, owner]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.12.5"
+      - run: uv sync --locked
+      - run: uv run --locked python tools/install_release.py
+      - run: uv run --locked python tools/m1.py install
+      - run: uv run --locked python tools/m1_disclosure.py install
+      - run: uv run --locked python -m unittest discover -s tests -p live_m1_disclosure.py -v
+        env:
+          KRYVOLA_M1_DISCLOSURE_GROUP: ${{ matrix.group }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m1-disclosure-${{ matrix.group }}
+          path: build/m1-disclosure-segments/${{ matrix.group }}/m1-disclosure-report.json
+          if-no-files-found: error
+          retention-days: 7
+
+  m1-disclosure-verify:
+    needs: m1-disclosure
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.12.5"
+      - run: uv sync --locked
+      - run: uv run --locked python tools/m1_disclosure.py install
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: m1-disclosure-*
+          path: build/m1-disclosure-segments
+      - run: uv run --locked python tools/m1_disclosure.py verify-segments --segments build/m1-disclosure-segments > build/m1-disclosure-report.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m1-complete-disclosure-report
+          path: build/m1-disclosure-report.json
+          retention-days: 7

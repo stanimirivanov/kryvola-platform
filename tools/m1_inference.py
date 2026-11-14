@@ -247,7 +247,7 @@ def signing_key(signer):
 
 
 class OwnerSession:
-    def __init__(self, stack, engine, *, recovery=False):
+    def __init__(self, stack, engine, *, recovery=False, mode=None):
         self.log = (stack.folder / "owner-session.log").open("xb")
         os.chmod(self.log.name, 0o600)
         container = stack.compose("ps", "-q", "owner").decode().strip()
@@ -264,7 +264,7 @@ class OwnerSession:
                 "-c",
                 source,
                 engine,
-                *(["recovery"] if recovery else []),
+                *([mode] if mode is not None else ["recovery"] if recovery else []),
             ],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
@@ -371,8 +371,8 @@ class Operator:
                 **{k: common[k] for k in ("policy_digest", "policy_epoch")},
             }
             lane = "consumer_grants"
-        elif action == "GET_OPERATION":
-            fields = {"scope": target, "actions": ["GET_OPERATION"]}
+        elif action in {"GET_OPERATION", "CANCEL_OPERATION"}:
+            fields = {"scope": target, "actions": [action]}
             lane = "registry_grants"
         else:
             require(

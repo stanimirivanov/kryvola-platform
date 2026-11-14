@@ -5,6 +5,38 @@ import unittest
 
 
 class RecoveryEvidenceTests(unittest.TestCase):
+    def test_same_worker_retry_cannot_bypass_a_held_boundary(self):
+        import importlib.util
+        import json
+        import tempfile
+        from concurrent.futures import ThreadPoolExecutor
+        from pathlib import Path
+
+        from tools import m1
+
+        spec = importlib.util.spec_from_file_location("fixture", m1.ROOT / "config/m1/service.py")
+        assert spec is not None and spec.loader is not None
+        fixture = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(fixture)
+        with tempfile.TemporaryDirectory() as folder, ThreadPoolExecutor(max_workers=1) as pool:
+            state = Path(folder)
+            fixture.__dict__["STATE"] = state
+            (state / "recovery.json").write_text(json.dumps({"action": "SELECT", "edge": "before"}))
+            release = state / "barrier-release"
+            release.touch()
+            fixture.recovery_barrier("SELECT", "before")
+            release.unlink()
+            retry = pool.submit(fixture.recovery_barrier, "SELECT", "before")
+            try:
+                with self.assertRaises(TimeoutError):
+                    retry.result(timeout=0.05)
+            finally:
+                release.touch()
+                retry.result(timeout=1)
+            release.unlink()
+            fixture.__dict__["BARRIER_BOOT"] = b"a different real worker generation"
+            fixture.recovery_barrier("SELECT", "before")
+
     def test_boundary_marker_is_never_visible_as_partial_json(self):
         import importlib.util
         import json

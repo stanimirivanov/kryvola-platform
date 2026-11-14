@@ -253,50 +253,7 @@ def prepare(engine_digest):
     return prepared, state, descriptor
 
 
-def main():
-    global PHASE, VALUES
-    resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
-    if ctypes.CDLL(None).prctl(4, 0, 0, 0, 0) != 0:
-        raise ValueError("M1_OWNER_PROCESS_PROTECTION")
-    VALUES = tuple(secrets.choice((0, 1, 2, 7, 15, 63, 127, 128, 254, 255)) for _ in range(2))
-    SECRET_MARKERS.extend([canonical(list(VALUES)), json.dumps(list(VALUES)).encode()])
-    prepared, state, descriptor = prepare(sys.argv[1])
-    if sys.argv[2:] == ["prepare"]:
-        return
-    for item in prepared.artifacts:
-        SECRET_MARKERS.extend(
-            [item.data[-64:], item.data[-64:].hex().encode(), base64.b64encode(item.data[:96])]
-        )
-
-    def credential(action, target):
-        global PHASE
-        PHASE = action
-        emit({"stage": "GRANT", "action": action, "target": target})
-        token = receive()["token"]
-        return token
-
-    spec = importlib.util.spec_from_file_location("m1_service", "/opt/m1/service.py")
-    if spec is None or spec.loader is None:
-        raise ValueError("M1_OWNER_TLS")
-    service = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(service)
-    client = client_sdk.Client(
-        "runtime", 8443, service.tls("owner"), "spiffe://m1.test/runtime", credential
-    )
-    try:
-        admitted = sdk.submit(client, prepared)
-    except client_sdk.SubmissionError:
-        if sys.argv[2:] != ["recovery"]:
-            raise
-        emit({"stage": "REJECTED", "code": "SUBMISSION_REJECTED"})
-        audit()
-        return
-    emit({"stage": "ADMITTED", "response": admitted})
-    # The operator supplies only committed public release documents after the real workflow.
-    released = receive()
-    if released == {"audit_only": True} and sys.argv[2:] == ["recovery"]:
-        audit()
-        return
+def open_released(client, state, descriptor, released, credential, service):
     for suffix in ("release", "release-signature", "open-policy"):
         write(suffix, released[suffix])
     svid = json.loads(
@@ -344,7 +301,46 @@ def main():
         SLOT,
         lambda scope: credential("CONSUMER_READ", {"scope": scope, "part_index": None}),
     )
-    output = lifecycle.open_result(released["scope"], opener)
+    fault = released.get("fault")
+    fetched, stopped, pid = False, False, None
+    try:
+        output = lifecycle.fetch(released["scope"])
+        fetched = True
+        if fault == "malformed":
+            damaged = bytes([output.ciphertext[0] ^ 1]) + output.ciphertext[1:]
+            output = type(output)(output.scope, output.manifest, damaged)
+        if fault == "unavailable":
+            import signal
+
+            raw = run(
+                [
+                    "dbus-send",
+                    "--session",
+                    "--print-reply",
+                    "--dest=org.freedesktop.DBus",
+                    "/org/freedesktop/DBus",
+                    "org.freedesktop.DBus.GetConnectionUnixProcessID",
+                    "string:org.freedesktop.secrets",
+                ]
+            )
+            match = re.search(rb"uint32 (\d+)", raw)
+            assert match is not None
+            pid = int(match[1])
+            assert os.stat(f"/proc/{pid}").st_uid == os.geteuid()
+            os.kill(pid, signal.SIGSTOP)
+            stopped = bool(re.search(r"State:\s+T", Path(f"/proc/{pid}/status").read_text()))
+            assert stopped
+        output = opener.open_result(output)
+    except client_sdk.SubmissionError, client_sdk.OwnerUnavailable:
+        if fault not in {"malformed", "substituted", "unavailable", "revoked"}:
+            raise
+        emit({"stage": "REJECTED", "fault": fault, "fetched": fetched, "keyring_stopped": stopped})
+        return
+    finally:
+        if pid is not None:
+            os.kill(pid, signal.SIGCONT)
+    if fault is not None:
+        raise ValueError("M1_OWNER_FAULT_ACCEPTED")
     expected = (
         importlib.import_module("kryvola_ml.baseline").tiny_circuit(descriptor).evaluate(VALUES)
     )
@@ -361,6 +357,67 @@ def main():
             "frozen_reference_sha256": reference["manifest_sha256"],
         }
     )
+
+
+def main():
+    global PHASE, VALUES
+    resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+    if ctypes.CDLL(None).prctl(4, 0, 0, 0, 0) != 0:
+        raise ValueError("M1_OWNER_PROCESS_PROTECTION")
+    VALUES = tuple(secrets.choice((0, 1, 2, 7, 15, 63, 127, 128, 254, 255)) for _ in range(2))
+    SECRET_MARKERS.extend([canonical(list(VALUES)), json.dumps(list(VALUES)).encode()])
+    prepared, state, descriptor = prepare(sys.argv[1])
+    if sys.argv[2:] == ["prepare"]:
+        return
+    for item in prepared.artifacts:
+        SECRET_MARKERS.extend(
+            [item.data[-64:], item.data[-64:].hex().encode(), base64.b64encode(item.data[:96])]
+        )
+
+    def credential(action, target):
+        global PHASE
+        PHASE = action
+        emit({"stage": "GRANT", "action": action, "target": target})
+        token = receive()["token"]
+        return token
+
+    spec = importlib.util.spec_from_file_location("m1_service", "/opt/m1/service.py")
+    if spec is None or spec.loader is None:
+        raise ValueError("M1_OWNER_TLS")
+    service = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(service)
+    client = client_sdk.Client(
+        "runtime", 8443, service.tls("owner"), "spiffe://m1.test/runtime", credential
+    )
+    try:
+        admitted = sdk.submit(client, prepared)
+    except client_sdk.SubmissionError:
+        if sys.argv[2:] != ["recovery"]:
+            raise
+        emit({"stage": "REJECTED", "code": "SUBMISSION_REJECTED"})
+        audit()
+        return
+    emit({"stage": "ADMITTED", "response": admitted})
+    # Probe commands remain in the owner UID; no plaintext is returned to the controller.
+    mode = sys.argv[2:]
+    while True:
+        released = receive()
+        if released == {"audit_only": True} and mode in (["recovery"], ["disclosure"]):
+            audit()
+            return
+        if mode == ["disclosure"] and released.get("command") == "cancel":
+            lifecycle = importlib.import_module("kryvola_ml.sdk.lifecycle").Lifecycle(
+                client, state["operation"]
+            )
+            try:
+                saved = lifecycle.cancel(released["idempotency_key"])
+                emit({"stage": "CANCEL", "outcome": saved.outcome, "fence": saved.fence})
+            except client_sdk.SubmissionError:
+                emit({"stage": "CANCEL_UNAVAILABLE"})
+            continue
+        open_released(client, state, descriptor, released, credential, service)
+        if mode != ["disclosure"]:
+            break
 
     audit()
 
