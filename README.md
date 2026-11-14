@@ -1,5 +1,9 @@
 # kryvola-platform
 
+The [M1 cancellation/disclosure qualification](docs/m1-disclosure.md) adds a
+checksum-pinned state oracle (`uv run --locked python tools/m1_disclosure.py install`)
+and real owner/transaction race cases to the existing M1 installation and full gate.
+
 [M0 acceptance audits](docs/m0-acceptance.md) retain exact source/artifact evidence
 and mandatory blockers. The current result is BLOCKED; audit success does not
 approve M0, M1 or production.

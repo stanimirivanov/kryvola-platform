@@ -2,11 +2,15 @@
 
 import copy
 import hashlib
+import io
 import json
 import platform
+import ssl
 import tarfile
 import tempfile
 import unittest
+import urllib.error
+from email.message import Message
 from pathlib import Path
 from unittest.mock import patch
 
@@ -14,6 +18,68 @@ from tools import workflow_assets as assets
 
 
 class WorkflowAssetTests(unittest.TestCase):
+    def test_bad_certificate_or_permanent_http_failure_is_not_retried(self):
+        errors = (
+            urllib.error.URLError(ssl.SSLCertVerificationError(1, "certificate rejected")),
+            urllib.error.HTTPError(
+                "https://example.invalid/asset", 404, "missing", Message(), None
+            ),
+        )
+        for error in errors:
+            with (
+                self.subTest(error=type(error)),
+                patch.object(assets.urllib.request, "urlopen", side_effect=error) as get,
+            ):
+                with self.assertRaises(urllib.error.URLError):
+                    assets.download("https://example.invalid/asset", "a" * 64)
+                self.assertEqual(get.call_count, 1)
+
+    def test_install_caches_only_complete_checksum_verified_bytes_after_reset(self):
+        raw = b"pinned asset"
+        expected = hashlib.sha256(raw).hexdigest()
+        pins = {"fabric": {"source": "a" * 40, "assets": {"asset.dat": expected}}}
+        reset = urllib.error.URLError(ConnectionResetError("reset"))
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with (
+                patch.object(assets, "OUTPUT", root),
+                patch.object(assets, "pins", return_value=pins),
+                patch.object(
+                    assets.urllib.request, "urlopen", side_effect=[reset, io.BytesIO(raw)]
+                ),
+                patch.object(assets, "verify") as verify,
+                patch.object(assets, "engine") as engine,
+            ):
+                assets.install()
+            self.assertEqual((root / "fabric/asset.dat").read_bytes(), raw)
+            verify.assert_called_once()
+            engine.assert_called_once()
+
+    def test_connection_reset_retries_only_before_verified_bytes_are_returned(self):
+        raw = b"pinned release bytes"
+        reset = urllib.error.URLError(ConnectionResetError("connection reset by peer"))
+        with patch.object(
+            assets.urllib.request, "urlopen", side_effect=[reset, io.BytesIO(raw)]
+        ) as get:
+            result = assets.download(
+                "https://example.invalid/asset", hashlib.sha256(raw).hexdigest()
+            )
+        self.assertEqual(result, raw)
+        self.assertEqual(get.call_count, 2)
+
+    def test_reset_exhaustion_and_integrity_failure_do_not_admit_bytes(self):
+        reset = urllib.error.URLError(ConnectionResetError("reset"))
+        with patch.object(assets.urllib.request, "urlopen", side_effect=reset) as get:
+            with self.assertRaises(urllib.error.URLError):
+                assets.download("https://example.invalid/asset", "a" * 64)
+        self.assertEqual(get.call_count, 3)
+        with patch.object(
+            assets.urllib.request, "urlopen", return_value=io.BytesIO(b"changed")
+        ) as get:
+            with self.assertRaisesRegex(ValueError, "WORKFLOW_DOWNLOAD_PIN"):
+                assets.download("https://example.invalid/asset", "a" * 64)
+        self.assertEqual(get.call_count, 1)
+
     def test_tag_and_hash_drift_rejected(self):
         original = assets.pins()
         for field, value in (("source", "main"), ("assets", {"untrusted.whl": "a" * 64})):

@@ -453,3 +453,23 @@ Existing startup, inference, admission, isolation and frozen M0 gates remain.
 No component publication or production/release policy changes. See
 [execution and transport recovery](m1-recovery.md) for exact boundaries, commands
 and unqualified failures; cancellation/disclosure races remain M1-PR35.
+
+## M1-PR35 — cancellation and disclosure races, issue #60
+
+The disclosure gate requires ten real published-service cases: cancellation on
+both sides of selection, a blocked cancellation transaction, runtime unavailability,
+administrative termination, cancellation after legitimate opening, approval
+revocation before/after release, owner-local malformed/substituted delivery and
+key-service reconnect, and real Continue-As-New followed by recovery fencing.
+SQL fences/retirement, receipts, selections, immutable disclosure identity/output,
+Temporal history, object inventory, retention pins and private canary audits must
+corroborate the outcome. Process errors alone cannot qualify a case.
+
+The existing Fabric-pinned release oracle checks abstract implementation traces;
+three independent CI groups must form one complete source/artifact-bound report.
+Partial and stale reports fail aggregate qualification. Release policy and
+immutable component pins are unchanged. Previously disclosed plaintext cannot be
+retracted; post-completion recovery tests refuse stale replacement rather than
+claiming arbitrary new approval/readmission. No production profile is enabled.
+See [cancellation and disclosure races](m1-disclosure.md). PR36 retains measured
+envelope qualification.

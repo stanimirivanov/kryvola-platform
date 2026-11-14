@@ -17,6 +17,7 @@ from pathlib import Path
 
 STATE = Path("/run/m1-state")
 SECRETS = Path("/run/m1-secrets")
+BARRIER_BOOT = os.urandom(16)
 
 
 def recovery_barrier(action, edge):
@@ -28,14 +29,20 @@ def recovery_barrier(action, edge):
     if value != {"action": action, "edge": edge}:
         return
     marker = STATE / "barrier-reached"
-    if marker.exists():  # A restarted worker must retry the published operation.
-        return
-    # The controller observes concurrently; publish only complete JSON.
-    with tempfile.TemporaryDirectory(dir=STATE) as folder:
-        pending = Path(folder) / "marker"
-        pending.write_text(json.dumps(value))
-        pending.chmod(0o644)
-        pending.replace(marker)
+    generation = STATE / "barrier-generation"
+    if marker.exists():
+        if generation.read_bytes() != BARRIER_BOOT:
+            return  # Only a genuinely restarted worker bypasses the old hold.
+    else:
+        # The controller observes concurrently; publish only complete JSON.
+        with tempfile.TemporaryDirectory(dir=STATE) as folder:
+            pending = Path(folder) / "marker"
+            pending.write_bytes(BARRIER_BOOT)
+            pending.chmod(0o644)
+            pending.replace(generation)
+            pending.write_text(json.dumps(value))
+            pending.chmod(0o644)
+            pending.replace(marker)
     until = time.monotonic() + 25
     while not (STATE / "barrier-release").exists():
         if time.monotonic() >= until:

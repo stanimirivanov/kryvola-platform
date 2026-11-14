@@ -117,10 +117,10 @@ def validate_case(value):
 
 
 class DatabaseLock:
-    """A real PostgreSQL transaction holds the inbox commit boundary."""
+    """A real PostgreSQL transaction holds a named, empty commit boundary."""
 
     def __init__(self, stack, table="fabric_inbox"):
-        require(table in {"fabric_inbox", "fabric_execution_receipts"})
+        require(table in {"fabric_inbox", "fabric_execution_receipts", "fabric_operation_barriers"})
         self.table = table
         container = stack.compose("ps", "-q", "postgres").decode().strip()
         require(stack.sql("SELECT count(*) FROM " + table).strip() == b"0")
