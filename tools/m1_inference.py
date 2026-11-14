@@ -10,6 +10,7 @@ import select
 import subprocess
 import sys
 import time
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -28,6 +29,51 @@ def canonical(value):
 def require(value, code="M1_INFERENCE_REJECTED"):
     if not value:
         raise ValueError(code)
+
+
+@contextmanager
+def serial_request(stack):
+    """Only a successfully completed request permits reuse of mutable fixture authority."""
+    require(not (stack.folder / "inference-failed").exists(), "M1_FIXTURE_FAILED")
+    active = stack.folder / "inference-active"
+    try:
+        active.touch(exist_ok=False)
+    except FileExistsError:
+        raise ValueError("M1_FIXTURE_BUSY") from None
+    try:
+        yield
+    except BaseException:
+        (stack.folder / "inference-failed").touch()
+        raise
+    finally:
+        active.unlink()
+
+
+def scope_sql(operation, alias=""):
+    require(not alias or re.fullmatch(r"[a-z_]+", alias))
+    prefix = alias + "." if alias else ""
+    for key in ("tenant_scope", "operation_id"):
+        require(re.fullmatch(r"[A-Za-z0-9_.:-]{1,128}", operation[key]))
+    return " AND ".join(
+        prefix + k + "='" + operation[k] + "'" for k in ("tenant_scope", "operation_id")
+    )
+
+
+def operation_notices(stack, operation):
+    """Retain real offsets; preceding operations and duplicate notices are not new work."""
+    first = getattr(stack, "_m1_notice_cursor", 0)
+    for offset in range(first, first + 64):
+        notice, size = broker_record(stack, offset)
+        if all(notice[k] == operation[k] for k in ("tenant_scope", "operation_id")):
+            yield notice, size, offset
+
+
+def disclosure_sql(operation):
+    return (
+        "output_upload_id IN (SELECT output_upload_id FROM fabric_execution_receipts WHERE "
+        + scope_sql(operation)
+        + ")"
+    )
 
 
 def phase(name):
@@ -247,8 +293,11 @@ def signing_key(signer):
 
 
 class OwnerSession:
-    def __init__(self, stack, engine, *, recovery=False, mode=None):
-        self.log = (stack.folder / "owner-session.log").open("xb")
+    def __init__(self, stack, engine, *, recovery=False, mode=None, request_id=None):
+        require(request_id is None or re.fullmatch(r"[0-9a-f]{16}", request_id))
+        require(request_id is None or (not recovery and mode is None))
+        suffix = "-" + request_id if request_id is not None else ""
+        self.log = (stack.folder / ("owner-session" + suffix + ".log")).open("xb")
         os.chmod(self.log.name, 0o600)
         container = stack.compose("ps", "-q", "owner").decode().strip()
         source = (m1.ROOT / "config/m1/owner_inference.py").read_text()
@@ -264,7 +313,15 @@ class OwnerSession:
                 "-c",
                 source,
                 engine,
-                *([mode] if mode is not None else ["recovery"] if recovery else []),
+                *(
+                    ["request", request_id]
+                    if request_id is not None
+                    else [mode]
+                    if mode is not None
+                    else ["recovery"]
+                    if recovery
+                    else []
+                ),
             ],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
@@ -272,7 +329,9 @@ class OwnerSession:
         )
         self.noise = bytearray()
         self.buffer = bytearray()
-        self.diagnostic_path = m1.ROOT / "build" / (stack.project + "-owner-diagnostic.log")
+        self.diagnostic_path = (
+            m1.ROOT / "build" / (stack.project + "-owner-diagnostic" + suffix + ".log")
+        )
 
     def receive(self, timeout=90):
         stream = self.process.stdout
@@ -404,7 +463,7 @@ class Operator:
         return token
 
 
-def provision(stack, operator, locked):
+def provision(stack, operator, locked, *, reuse_worker=False):
     prepared = operator.prepared
     operation, plan = prepared["operation"], prepared["plan"]
     identity = {
@@ -475,7 +534,25 @@ print(
             },
         },
     )
-    stack.compose("restart", "workflow")
+    if reuse_worker:
+        # CoordinatorRelease resolves these private paths once, then reads them
+        # per invocation. Only the serialized measurement path reuses this worker.
+        stack.execute(
+            "workflow",
+            "python",
+            "-c",
+            """
+from pathlib import Path
+root, = Path('/tmp').glob('m1-release-*')
+for name in ('database-release', 'release.json'):
+    pending = root / (name + '.pending')
+    pending.write_bytes((Path('/run/m1-secrets') / name).read_bytes())
+    pending.chmod(0o600)
+    pending.replace(root / name)
+""",
+        )
+    else:
+        stack.compose("restart", "workflow")
     reads = []
     for reservation, manifest in zip(prepared["reservations"], prepared["manifests"], strict=True):
         scope = {
@@ -622,15 +699,17 @@ for name, data in [
 
 
 def run_workflow(stack, actual):
-    notice, _ = broker_record(stack, 0)
-    require(notice["kind"] == "operation_created" and notice["operation_id"] == "m1-inference")
+    operation = actual["attempt"]
+    notice = next(
+        n for n, _, _ in operation_notices(stack, operation) if n["kind"] == "operation_created"
+    )
     require(len(canonical(notice)) <= 32768)
 
     def received():
         require(
             stack.sql(
                 "SELECT count(*) FROM fabric_inbox JOIN fabric_outbox ON event_id=id "
-                "WHERE kind='operation_created'"
+                "WHERE kind='operation_created' AND " + scope_sql(operation, "fabric_outbox")
             ).strip()
             == b"1"
         )
@@ -703,7 +782,7 @@ sys.stdout.buffer.write(
             "SELECT json_build_object('release',"
             "convert_from(canonical_authorization,'UTF8')::json,'release-signature',"
             "convert_from(canonical_signature,'UTF8')::json,'disclosure_id',disclosure_id) "
-            "FROM fabric_disclosure_decisions"
+            "FROM fabric_disclosure_decisions WHERE " + disclosure_sql(operation)
         )
         require(bool(raw.strip()))
         return json.loads(raw)
@@ -712,6 +791,7 @@ sys.stdout.buffer.write(
 
 
 def evidence(stack, owner, operator, identifier, decision, opened, locked):
+    where = scope_sql(operator.prepared["operation"])
     require(opened["assurance"] == "CONFIDENTIALITY_ONLY")
     require(operator.prepared["consent"]["allow_unverified_release"] is True)
     require(operator.prepared["consent"]["computation_integrity"] == "UNPROVEN")
@@ -733,33 +813,50 @@ def evidence(stack, owner, operator, identifier, decision, opened, locked):
     )
     require(history["result"]["disclosure_id"] == decision["disclosure_id"])
     receipt = json.loads(
-        stack.sql("SELECT convert_from(canonical_receipt,'UTF8') FROM fabric_execution_receipts")
+        stack.sql(
+            "SELECT convert_from(canonical_receipt,'UTF8') FROM fabric_execution_receipts WHERE "
+            + where
+        )
     )
     require(receipt["assurance"] == decision["release"]["assurance"] == "CONFIDENTIALITY_ONLY")
     require(receipt["output_manifest_digests"] == [decision["release"]["output_manifest_digest"]])
     require(
-        stack.sql("SELECT receipt_digest FROM fabric_execution_receipts").decode().strip()
+        stack.sql("SELECT receipt_digest FROM fabric_execution_receipts WHERE " + where)
+        .decode()
+        .strip()
         == decision["release"]["receipt_digest"]
     )
     require(
         stack.sql(
-            "SELECT (SELECT count(*) FROM fabric_executions),"
-            "(SELECT count(*) FROM fabric_execution_receipts),"
-            "(SELECT count(*) FROM fabric_selected_results),"
-            "(SELECT count(*) FROM fabric_disclosure_decisions)"
+            "SELECT "
+            + ",".join(
+                "(SELECT count(*) FROM "
+                + table
+                + " WHERE "
+                + (
+                    disclosure_sql(operator.prepared["operation"])
+                    if table == "fabric_disclosure_decisions"
+                    else where
+                )
+                + ")"
+                for table in (
+                    "fabric_executions",
+                    "fabric_execution_receipts",
+                    "fabric_selected_results",
+                    "fabric_disclosure_decisions",
+                )
+            )
         ).strip()
         == b"1|1|1|1"
     )
     notices, seen, maximum = [], set(), 0
-    for offset in range(8):
-        notice, size = broker_record(stack, offset)
-        require(notice["operation_id"] == operator.prepared["operation"]["operation_id"])
-        require(notice["tenant_scope"] == operator.prepared["operation"]["tenant_scope"])
+    for notice, size, offset in operation_notices(stack, operator.prepared["operation"]):
         require(notice["kind"] in {"operation_created", "result_selected"})
         notices.append(canonical(notice))
         seen.add(notice["kind"])
         maximum = max(maximum, size)
         if len(seen) == 2:
+            stack._m1_notice_cursor = offset + 1
             break
     require(len(seen) == 2, "M1_BROKER_CONVERGENCE")
     images, logs = {}, []
@@ -851,17 +948,35 @@ def evidence(stack, owner, operator, identifier, decision, opened, locked):
     )
 
 
-def qualify():
+def qualify(*, stack=None, request_id=None):
+    """Qualify one request; external fixtures require a fresh identity and serial ownership."""
+    owned = stack is None
+    require(request_id is None or re.fullmatch(r"[0-9a-f]{16}", request_id))
+    if not owned:
+        assert request_id is not None
+        require(request_id is not None and stack.owned and stack.configured)
+        require(
+            not (stack.folder / ("owner-session-" + request_id + ".log")).exists(),
+            "M1_REQUEST_REPLAYED",
+        )
     locked = m1_assets.load()
-    stack = m1.Stack("kryvola-m1-" + secrets.token_hex(6))
+    if owned:
+        stack = m1.Stack("kryvola-m1-" + secrets.token_hex(6))
+    resources = ExitStack()
     owner = None
     actual = None
     try:
-        stack.start()
-        stack.verify()
-        owner = OwnerSession(stack, locked["permissions"]["image_sha256"])
+        if owned:
+            stack.start()
+            stack.verify()
+        resources.enter_context(serial_request(stack))
+        owner = OwnerSession(stack, locked["permissions"]["image_sha256"], request_id=request_id)
         prepared = owner.receive()
         require(prepared["stage"] == "PREPARED")
+        require(
+            prepared["operation"]["operation_id"]
+            == "m1-inference" + ("-" + request_id if request_id else "")
+        )
         phase("OWNER_PREPARED")
         operator = Operator(stack, prepared)
         while True:
@@ -871,7 +986,7 @@ def qualify():
                 break
             require(message["stage"] == "GRANT")
             owner.send({"token": operator.owner_grant(message)})
-        actual = provision(stack, operator, locked)
+        actual = provision(stack, operator, locked, reuse_worker=not owned)
         phase("EXECUTION_PROVISIONED")
         identifier, decision = run_workflow(stack, actual)
         phase("RELEASE_COMMITTED")
@@ -906,7 +1021,8 @@ def qualify():
             owner.send({"token": operator.owner_grant(message)})
         require(message["owner_reference_match"] is True)
         result = evidence(stack, owner, operator, identifier, decision, message, locked)
-        path = m1.ROOT / "build/m1-inference-report.json"
+        suffix = "-" + request_id if request_id else ""
+        path = m1.ROOT / "build" / ("m1-inference-report" + suffix + ".json")
         path.write_bytes(canonical(result) + b"\n")
         return result
     except Exception:
@@ -963,7 +1079,11 @@ with grpc.insecure_channel(
             if owner is not None:
                 owner.close()
         finally:
-            stack.close()
+            try:
+                resources.__exit__(*sys.exc_info())
+            finally:
+                if owned:
+                    stack.close()
 
 
 if __name__ == "__main__":

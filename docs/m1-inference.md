@@ -55,6 +55,27 @@ network boundaries and live authorization checks remain enforced.
 
 ## Public evidence and limits
 
+### Reusable fixture foundation (M1-PR36-R1)
+
+`qualify(stack=running_stack, request_id="<16 lowercase hex digits>")` runs a
+fresh request in a caller-owned, started and verified `tools.m1.Stack`. The live
+suite submits two real requests this way and checks that every service container
+retains its original start time. Each request uses fresh owner keys, a separate
+owner custody directory, operation and workflow identities, and its own report
+at `build/m1-inference-report-<request_id>.json`. SQL evidence and broker offsets
+are scoped to the actual operation; previous requests cannot satisfy its checks.
+
+Requests are serial: overlapping requests and repeated identifiers are rejected.
+A failed request poisons the fixture, which the caller must dispose of rather
+than retry. The caller always owns stack cleanup. After a completed request the
+trusted fixture refreshes the running coordinator's private release-policy files;
+it does not restart the workflow worker. Existing single-request qualification
+continues to own and dispose of its stack.
+
+This foundation measures no latency and claims no key-cache reuse. Warm service
+processes still receive fresh owner key contexts. M1-PR36-R2 adds measured campaigns;
+M1-PR36-R3 classifies and publishes the supported envelope and its gates.
+
 `build/m1-inference-report.json` records exact release-manifest pins, running image
 identities and the separately verified Engine OCI configuration digest, the
 workflow/execution/disclosure identities, receipt and

@@ -1,12 +1,53 @@
 """Real owner custody and inference using admitted published M1 artifacts."""
 
 import json
+import secrets
 import unittest
 
 from tools import m1
 
 
 class PublishedM1InferenceTests(unittest.TestCase):
+    def test_distinct_requests_reuse_services_with_separate_durable_evidence(self):
+        from tools.m1_inference import qualify
+
+        stack = m1.Stack("kryvola-m1-" + secrets.token_hex(6))
+
+        def processes():
+            identifiers = stack.compose("ps", "-q").decode().split()
+            import subprocess
+
+            return subprocess.check_output(
+                ["docker", "inspect", "--format", "{{.Id}} {{.State.StartedAt}}", *identifiers],
+                timeout=20,
+            ).splitlines()
+
+        try:
+            stack.start()
+            stack.verify()
+            before = sorted(processes())
+            first = qualify(stack=stack, request_id="a" * 16)
+            with self.assertRaisesRegex(ValueError, "M1_REQUEST_REPLAYED"):
+                qualify(stack=stack, request_id="a" * 16)
+            second = qualify(stack=stack, request_id="b" * 16)
+            self.assertEqual(before, sorted(processes()))
+            for key in first["execution"]:
+                self.assertNotEqual(first["execution"][key], second["execution"][key], key)
+            self.assertEqual(first["frozen_reference_sha256"], second["frozen_reference_sha256"])
+            for report in (first, second):
+                self.assertIs(report["owner_reference_match"], True)
+                self.assertIs(report["logs_clean"], True)
+                self.assertEqual(report["broker"]["events"], 2)
+            counts = stack.sql(
+                "SELECT (SELECT count(*) FROM fabric_executions),"
+                "(SELECT count(*) FROM fabric_execution_receipts),"
+                "(SELECT count(*) FROM fabric_selected_results),"
+                "(SELECT count(*) FROM fabric_disclosure_decisions)"
+            )
+            self.assertEqual(counts.strip(), b"2|2|2|2")
+        finally:
+            stack.close()
+
     def test_real_owner_to_owner_inference_matches_the_frozen_reference(self):
         from tools.m1_inference import qualify
 
