@@ -54,15 +54,18 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: "0.12.5"
       - run: uv sync --locked
       - run: uv run --locked python tools/install_release.py
       - run: uv run --locked python tools/m1.py install
+      - run: uv run --locked python -m tools.m1_envelope check evidence/m1-supported-envelope.json
       - run: uv run --locked python -m unittest discover -s tests -p live_m1_identity.py -v
       - run: uv run --locked python tools/m1.py ci
       - run: uv run --locked python -m unittest discover -s tests -p live_m1_inference.py -v
+      - run: uv run --locked python -m tools.m1_envelope measure build/m1-supported-envelope.json --pairs 1
       - run: uv run --locked python tools/m1_isolation_local.py
       - uses: actions/upload-artifact@v4
         if: always()
@@ -71,6 +74,7 @@ jobs:
           path: |
             build/m1-report.json
             build/m1-inference-report.json
+            build/m1-supported-envelope.json
             build/m1-local-isolation.json
           if-no-files-found: ignore
           retention-days: 7
