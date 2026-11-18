@@ -27,6 +27,20 @@ SECRET_MARKERS = []
 VALUES = ()
 
 
+class FinalizingClient(client_sdk.Client):
+    def request(self, method, path, body, action, target):
+        # Finalization can commit before its reply is lost. Reconcile only this
+        # idempotent action, with a fresh exact credential on each SDK request.
+        attempts = 3 if action == "INPUT_UPLOAD_FINALIZE" else 1
+        for attempt in range(attempts):
+            try:
+                return super().request(method, path, body, action, target)
+            except client_sdk.SubmissionUnavailable:
+                if attempt + 1 == attempts:
+                    raise
+                time.sleep(attempt + 1)
+
+
 def canonical(value):
     return client_sdk.canonical(value)
 
@@ -144,7 +158,7 @@ def session():
     return key, trust
 
 
-def prepare(engine_digest):
+def prepare(engine_digest, request_id=None):
     global PHASE
     key, trust = session()
     PHASE = "SDK_PREPARE"
@@ -154,6 +168,13 @@ def prepare(engine_digest):
     operation["workflow_epoch"] = "1"
     operation["deadline_unix_ms"] = str(int(time.time() * 1000) + 300000)
     context = fixture("canonical-corpus.json", "key-context")
+    if request_id is not None:
+        operation["operation_id"] += "-" + request_id
+        operation["idempotency_key"] = "m1-admission-" + request_id
+        operation["logical_job_id"] = "m1-job-" + request_id
+        operation["disclosure_identity"]["logical_job_id"] = operation["logical_job_id"]
+        operation["plan_ref"]["plan_id"] = "m1-plan-" + request_id
+        context["key_context_id"] = "m1-key-" + request_id
     context.update(
         tenant_scope=operation["tenant_scope"],
         owner_identity=trust["signer"],
@@ -360,13 +381,19 @@ def open_released(client, state, descriptor, released, credential, service):
 
 
 def main():
-    global PHASE, VALUES
+    global PHASE, VALUES, ROOT
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
     if ctypes.CDLL(None).prctl(4, 0, 0, 0, 0) != 0:
         raise ValueError("M1_OWNER_PROCESS_PROTECTION")
     VALUES = tuple(secrets.choice((0, 1, 2, 7, 15, 63, 127, 128, 254, 255)) for _ in range(2))
     SECRET_MARKERS.extend([canonical(list(VALUES)), json.dumps(list(VALUES)).encode()])
-    prepared, state, descriptor = prepare(sys.argv[1])
+    request_id = None
+    if sys.argv[2:3] == ["request"]:
+        assert len(sys.argv) == 4 and re.fullmatch(r"[0-9a-f]{16}", sys.argv[3])
+        request_id = sys.argv[3]
+        ROOT = ROOT.with_name(ROOT.name + "-" + request_id)
+        del sys.argv[2:]
+    prepared, state, descriptor = prepare(sys.argv[1], request_id=request_id)
     if sys.argv[2:] == ["prepare"]:
         return
     for item in prepared.artifacts:
@@ -386,7 +413,7 @@ def main():
         raise ValueError("M1_OWNER_TLS")
     service = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(service)
-    client = client_sdk.Client(
+    client = FinalizingClient(
         "runtime", 8443, service.tls("owner"), "spiffe://m1.test/runtime", credential
     )
     try:
