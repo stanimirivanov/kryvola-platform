@@ -604,9 +604,7 @@ sys.stdout.buffer.write(
     )
     require(set(value) == {"schema_version", "attempt", "execution_id", "output_manifest_digest"})
     folder = stack.folder / "workflow-state/candidates" / actual["namespace"]
-    folder.mkdir(parents=True, mode=0o755)
-    (folder / "candidate.json").write_bytes(raw)
-    (folder / "candidate.json").chmod(0o444)
+    live.publish_candidate(folder, raw)
 
 
 def replay(stack, records):

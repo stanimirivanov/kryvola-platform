@@ -5,6 +5,41 @@ import unittest
 
 
 class RecoveryEvidenceTests(unittest.TestCase):
+    def test_candidate_export_never_publishes_partial_json(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        from tools.m1_recovery import export_candidate
+
+        actual = {"attempt": {"fence": "1"}, "execution_id": "exec-1", "namespace": "worker-1"}
+        value = {
+            "schema_version": "1",
+            "attempt": actual["attempt"],
+            "execution_id": "exec-1",
+            "output_manifest_digest": "a" * 64,
+        }
+        raw, observed = json.dumps(value).encode(), []
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "workflow-state/candidates/worker-1/candidate.json"
+            stack = SimpleNamespace(folder=Path(directory), execute=lambda *args: raw)
+
+            def partial_write(path, data):
+                with path.open("wb") as stream:
+                    stream.write(data[:1])
+                    stream.flush()
+                    observed.append(target.read_bytes() if target.exists() else None)
+                    stream.write(data[1:])
+                return len(data)
+
+            with patch.object(Path, "write_bytes", partial_write):
+                export_candidate(stack, actual)
+            self.assertEqual(observed, [None])
+            self.assertEqual(json.loads(target.read_bytes()), value)
+            self.assertEqual(target.stat().st_mode & 0o777, 0o444)
+
     def test_same_worker_retry_cannot_bypass_a_held_boundary(self):
         import importlib.util
         import json
