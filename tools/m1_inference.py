@@ -9,6 +9,7 @@ import secrets
 import select
 import subprocess
 import sys
+import tempfile
 import time
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
@@ -24,6 +25,16 @@ else:
 
 def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+
+
+def publish_candidate(folder, raw):
+    """Readers must observe either no candidate or complete, read-only metadata."""
+    folder.mkdir(parents=True, mode=0o755)
+    with tempfile.TemporaryDirectory(dir=folder) as directory:
+        pending = Path(directory) / "candidate.json"
+        pending.write_bytes(raw)
+        pending.chmod(0o444)
+        pending.replace(folder / "candidate.json")
 
 
 def require(value, code="M1_INFERENCE_REJECTED"):
@@ -773,9 +784,7 @@ sys.stdout.buffer.write(
     # Export bounded untrusted result metadata across the worker UID boundary.
     # The workflow still validates the exact candidate and commits selection via Fabric.
     folder = stack.folder / "workflow-state/candidates" / actual["namespace"]
-    folder.mkdir(parents=True, mode=0o755)
-    (folder / "candidate.json").write_bytes(raw)
-    (folder / "candidate.json").chmod(0o444)
+    publish_candidate(folder, raw)
 
     def decision():
         raw = stack.sql(
