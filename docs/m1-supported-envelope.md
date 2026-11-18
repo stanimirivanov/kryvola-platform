@@ -37,11 +37,12 @@ report with embedded observations. Passing that gate proves completeness and the
 observed local functional path, not latency/SLO success. It retains failure records
 before exiting nonzero. Checks recompute summaries and decisions, reject duplicate
 requests or missing stages, bind exact release/profile/reference/policy/harness
-bytes, and require measurement-source ancestry. These are reproducibility checks
+bytes, and require the exact committed harness contents. These are reproducibility checks
 on controlled runner evidence, not an independent signature or integrity proof.
 
 To refresh the committed snapshot after a harness or release change, commit the
 new source first, measure to `build/`, then copy the resulting JSON to
-`evidence/m1-supported-envelope.json` and commit it. The checker permits that
-ancestor source only while its measured harness files still match. R3's current
+`evidence/m1-supported-envelope.json` and commit it. The producer SHA is retained
+as provenance; committed harness contents, rather than feature-commit ancestry,
+must match so the check survives squash/rebase merges. R3's current
 snapshot sample counts and conclusions are in the JSON; no p95 success is implied.

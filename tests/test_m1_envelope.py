@@ -7,6 +7,15 @@ from pathlib import Path
 
 
 class EnvelopeTests(unittest.TestCase):
+    def test_squash_merges_preserve_exact_committed_harness_binding(self):
+        from tools.m1_envelope import build
+
+        raw = self.campaign()
+        # The producer SHA is retained as provenance; the gate must not depend
+        # on a feature commit remaining an ancestor after squash/rebase.
+        raw["source"] = "f" * 40
+        self.assertEqual(build(raw)["decision"], "ASYNCHRONOUS_ONLY")
+
     def campaign(self, pairs=1, seconds=1):
         from test_m1_campaign import CampaignTests
 
