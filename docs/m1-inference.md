@@ -66,6 +66,10 @@ at `build/m1-inference-report-<request_id>.json`. SQL evidence and broker offset
 are scoped to the actual operation; previous requests cannot satisfy its checks.
 
 Requests are serial: overlapping requests and repeated identifiers are rejected.
+A transient input-finalization failure gets at most three SDK requests, with
+one- and two-second backoff, the same upload/manifest and fresh exact credentials.
+Authorization denials and other submission actions are not retried. Exhaustion
+still fails qualification; it does not count as a successful request.
 A failed request poisons the fixture, which the caller must dispose of rather
 than retry. The caller always owns stack cleanup. After a completed request the
 trusted fixture refreshes the running coordinator's private release-policy files;

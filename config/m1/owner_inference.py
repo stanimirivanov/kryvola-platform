@@ -27,6 +27,20 @@ SECRET_MARKERS = []
 VALUES = ()
 
 
+class FinalizingClient(client_sdk.Client):
+    def request(self, method, path, body, action, target):
+        # Finalization can commit before its reply is lost. Reconcile only this
+        # idempotent action, with a fresh exact credential on each SDK request.
+        attempts = 3 if action == "INPUT_UPLOAD_FINALIZE" else 1
+        for attempt in range(attempts):
+            try:
+                return super().request(method, path, body, action, target)
+            except client_sdk.SubmissionUnavailable:
+                if attempt + 1 == attempts:
+                    raise
+                time.sleep(attempt + 1)
+
+
 def canonical(value):
     return client_sdk.canonical(value)
 
@@ -399,7 +413,7 @@ def main():
         raise ValueError("M1_OWNER_TLS")
     service = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(service)
-    client = client_sdk.Client(
+    client = FinalizingClient(
         "runtime", 8443, service.tls("owner"), "spiffe://m1.test/runtime", credential
     )
     try:

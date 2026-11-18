@@ -1,13 +1,75 @@
 """Reusable measurement fixtures must not mix request custody or SQL authority."""
 
+import ast
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 
 class ReusableInferenceTests(unittest.TestCase):
+    def finalizing_client(self, transport):
+        from tools import m1
+
+        class Unavailable(Exception):
+            pass
+
+        class Client:
+            request = staticmethod(transport)
+
+        source = ast.parse((m1.ROOT / "config/m1/owner_inference.py").read_text())
+        node = next(
+            n for n in source.body if isinstance(n, ast.ClassDef) and n.name == "FinalizingClient"
+        )
+        namespace: dict = {
+            "client_sdk": SimpleNamespace(Client=Client, SubmissionUnavailable=Unavailable),
+            "time": time,
+        }
+        exec(compile(ast.Module(body=[node], type_ignores=[]), "owner-client", "exec"), namespace)
+        return namespace["FinalizingClient"](), Unavailable
+
+    def test_lost_finalize_response_reconciles_the_same_committed_upload(self):
+        committed, attempts = {}, []
+
+        def transport(*request):
+            attempts.append(request)
+            committed.setdefault(request[1], request[2])
+            if len(attempts) == 1:
+                raise unavailable()
+            return committed[request[1]]
+
+        client, unavailable = self.finalizing_client(transport)
+        request = (
+            "POST",
+            "/v1/input-uploads/u/finalize",
+            b"exact-manifest",
+            "INPUT_UPLOAD_FINALIZE",
+            {"upload_id": "u"},
+        )
+        with patch.object(time, "sleep"):
+            self.assertEqual(client.request(*request), b"exact-manifest")
+        self.assertEqual(len(committed), 1)
+        self.assertEqual(attempts, [request, request])
+
+    def test_finalize_retry_is_bounded_and_does_not_retry_denials_or_other_actions(self):
+        for action, unavailable_failure, expected in (
+            ("INPUT_UPLOAD_FINALIZE", True, 3),
+            ("INPUT_UPLOAD_FINALIZE", False, 1),
+            ("APPROVED_OPERATION_ADMIT", True, 1),
+        ):
+            with self.subTest(action=action, unavailable=unavailable_failure):
+                transport = Mock()
+                client, unavailable = self.finalizing_client(transport)
+                error = unavailable if unavailable_failure else PermissionError
+                transport.side_effect = error("fixed failure")
+                with patch.object(time, "sleep"), self.assertRaises(error):
+                    client.request(
+                        "POST", "/v1/input-uploads/u/finalize", b"exact", action, {"upload_id": "u"}
+                    )
+                self.assertEqual(transport.call_count, expected)
+
     def test_invalid_request_identity_is_rejected_before_owner_access(self):
         from tools.m1_inference import OwnerSession
 
