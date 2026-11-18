@@ -49,7 +49,7 @@ the worker/workflow UID boundary; worker assignment credentials are not exposed
 to the workflow through the shared worker directory.
 
 The fixture bounds owner/Engine memory at 1 GiB, tenant artifacts at 128 MiB and
-storage at eight 32 MiB volumes. This accommodates the actual roughly 60 MB
+storage at twelve 32 MiB volumes. This accommodates the actual roughly 60 MB
 evaluation key and multipart staging. Read-only roots, worker identities,
 network boundaries and live authorization checks remain enforced.
 

@@ -5,6 +5,30 @@ Each bounded pair uses fresh keys twice and stays within the existing tenant quo
 Cold means fresh verified service processes, not a flushed OS/image cache. Request
 latency excludes setup, audits and telemetry; campaign throughput includes them.
 Memory is container-lifetime cgroup v2 peak usage, not a per-request allocation.
+
+Run after M1 installation from a clean committed checkout; source identity is
+checked before and after. Output is build/m1-campaign-<nonce>.json. Any failed or
+unrun observation makes the command exit nonzero. Each pair owns a fresh verified
+stack, measures its first request as COLD, then another as WARM_SERVICES without
+restarting services. Both have fresh owner keys; new pairs stay within quota.
+
+Boundary intervals cover owner preparation, admission/uploads, provisioning,
+dispatch through committed release and authorized opening. They include
+orchestration, not isolated native CPU timing. Byte counts describe serialized
+input/output artifacts, not total wire traffic. Engine key-cache hits/misses
+remain unobserved and must never be inferred from the warm-services label.
+
+Raw observations bind release/images, plan/key context, frozen reference and
+harness source. Existing nearest-rank quantiles expose sample sufficiency: p95
+requires twenty successes. Missing evidence and failures cannot become successful
+samples. Correctness is against the frozen FHE-Q1 circuit with CONFIDENTIALITY_ONLY
+integrity limitations; supported-envelope classification/publication remains R3.
+
+Storage has twelve bounded 32 MiB slots: reserve two for filer/growth headroom,
+then discount one 4 MiB chunk per artifact slot. The remaining 280 MiB covers
+staging plus immutable copies of the unchanged 128 MiB tenant quota. Eight slots
+could let artifact traffic consume the filer's slot, or strand finalization when
+filer metadata allocated first. Memory limits and request deadlines are unchanged.
 """
 
 import argparse

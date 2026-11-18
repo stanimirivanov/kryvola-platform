@@ -26,6 +26,19 @@ class PublishedM1InferenceTests(unittest.TestCase):
         try:
             stack.start()
             stack.verify()
+            # Filer metadata needs its own collection. Reserve it before artifact
+            # traffic, rather than relying on the timing of its background flush.
+            stack.execute(
+                "runtime",
+                "python",
+                "-c",
+                """
+import json, urllib.request
+with urllib.request.urlopen('http://storage:9333/dir/assign?count=1', timeout=5) as response:
+    assigned = json.load(response)
+assert assigned.get('fid') and not assigned.get('error')
+""",
+            )
             before = sorted(processes())
             cold = measure(stack, "COLD")
             first = cold["qualification"]

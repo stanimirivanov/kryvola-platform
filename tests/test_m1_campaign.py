@@ -1,10 +1,30 @@
 """Measured campaigns reject incomplete observations and unsupported cache claims."""
 
+import json
 import unittest
 from unittest.mock import patch
 
 
 class CampaignTests(unittest.TestCase):
+    def test_storage_bounds_cover_staging_immutable_and_filer_headroom(self):
+        from tools import m1
+
+        command = json.loads(m1.COMPOSE.read_bytes())["services"]["storage"]["command"]
+        slots = int(next(x.split("=", 1)[1] for x in command if x.startswith("-volume.max=")))
+        limit = (
+            int(
+                next(
+                    x.split("=", 1)[1]
+                    for x in command
+                    if x.startswith("-master.volumeSizeLimitMB=")
+                )
+            )
+            << 20
+        )
+        # Reserve filer/growth slots and one maximum-sized chunk per artifact
+        # volume. Every admitted byte can exist in staging and immutable storage.
+        self.assertGreaterEqual((slots - 2) * (limit - (4 << 20)), 2 * (128 << 20))
+
     def test_campaign_requires_committed_source_before_provisioning(self):
         from tools import m1_campaign as campaign
 
