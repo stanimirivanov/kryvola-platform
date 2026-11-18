@@ -948,7 +948,7 @@ def evidence(stack, owner, operator, identifier, decision, opened, locked):
     )
 
 
-def qualify(*, stack=None, request_id=None):
+def qualify(*, stack=None, request_id=None, observer=None):
     """Qualify one request; external fixtures require a fresh identity and serial ownership."""
     owned = stack is None
     require(request_id is None or re.fullmatch(r"[0-9a-f]{16}", request_id))
@@ -970,6 +970,7 @@ def qualify(*, stack=None, request_id=None):
             stack.start()
             stack.verify()
         resources.enter_context(serial_request(stack))
+        boundaries = [time.monotonic_ns()]
         owner = OwnerSession(stack, locked["permissions"]["image_sha256"], request_id=request_id)
         prepared = owner.receive()
         require(prepared["stage"] == "PREPARED")
@@ -978,17 +979,21 @@ def qualify(*, stack=None, request_id=None):
             == "m1-inference" + ("-" + request_id if request_id else "")
         )
         phase("OWNER_PREPARED")
+        boundaries.append(time.monotonic_ns())
         operator = Operator(stack, prepared)
         while True:
             message = owner.receive()
             if message["stage"] == "ADMITTED":
                 phase("SDK_ADMITTED")
+                boundaries.append(time.monotonic_ns())
                 break
             require(message["stage"] == "GRANT")
             owner.send({"token": operator.owner_grant(message)})
         actual = provision(stack, operator, locked, reuse_worker=not owned)
+        boundaries.append(time.monotonic_ns())
         phase("EXECUTION_PROVISIONED")
         identifier, decision = run_workflow(stack, actual)
+        boundaries.append(time.monotonic_ns())
         phase("RELEASE_COMMITTED")
         release = decision["release"]
         if operator.coordinator is None:
@@ -1020,7 +1025,34 @@ def qualify(*, stack=None, request_id=None):
             require(message["stage"] == "GRANT")
             owner.send({"token": operator.owner_grant(message)})
         require(message["owner_reference_match"] is True)
+        boundaries.append(time.monotonic_ns())
         result = evidence(stack, owner, operator, identifier, decision, message, locked)
+        if observer is not None:
+            observer(
+                {
+                    "stages_ns": dict(
+                        zip(
+                            (
+                                "owner_prepare",
+                                "admission",
+                                "provision",
+                                "dispatch_release",
+                                "owner_open",
+                            ),
+                            (b - a for a, b in zip(boundaries[:-1], boundaries[1:], strict=True)),
+                            strict=True,
+                        )
+                    ),
+                    "request_ns": boundaries[-1] - boundaries[0],
+                    "audit_ns": time.monotonic_ns() - boundaries[-1],
+                    "input_bytes": sum(int(m["serialized_bytes"]) for m in prepared["manifests"]),
+                    "key_context_digest": prepared["operation"]["key_context_ref"][
+                        "key_context_digest"
+                    ],
+                    "plan_digest": prepared["operation"]["plan_ref"]["plan_digest"],
+                    "profile": prepared["plan"]["security_profile"],
+                }
+            )
         suffix = "-" + request_id if request_id else ""
         path = m1.ROOT / "build" / ("m1-inference-report" + suffix + ".json")
         path.write_bytes(canonical(result) + b"\n")

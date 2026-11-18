@@ -183,7 +183,7 @@
         "-filer",
         "-s3",
         "-s3.config=/run/m1-secrets/s3-server.json",
-        "-volume.max=8",
+        "-volume.max=12",
         "-master.volumeSizeLimitMB=32"
       ],
       "volumes": [
