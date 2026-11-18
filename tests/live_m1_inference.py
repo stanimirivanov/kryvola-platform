@@ -9,6 +9,7 @@ from tools import m1
 
 class PublishedM1InferenceTests(unittest.TestCase):
     def test_distinct_requests_reuse_services_with_separate_durable_evidence(self):
+        from tools.m1_campaign import measure, summarize
         from tools.m1_inference import qualify
 
         stack = m1.Stack("kryvola-m1-" + secrets.token_hex(6))
@@ -26,10 +27,21 @@ class PublishedM1InferenceTests(unittest.TestCase):
             stack.start()
             stack.verify()
             before = sorted(processes())
-            first = qualify(stack=stack, request_id="a" * 16)
+            cold = measure(stack, "COLD")
+            first = cold["qualification"]
+            request_id = next(stack.folder.glob("owner-session-*.log")).stem.removeprefix(
+                "owner-session-"
+            )
             with self.assertRaisesRegex(ValueError, "M1_REQUEST_REPLAYED"):
-                qualify(stack=stack, request_id="a" * 16)
-            second = qualify(stack=stack, request_id="b" * 16)
+                qualify(stack=stack, request_id=request_id)
+            warm = measure(stack, "WARM_SERVICES")
+            second = warm["qualification"]
+            summary = summarize(
+                [cold, warm],
+                1 + cold["measurements"]["request_ns"] + warm["measurements"]["request_ns"],
+            )
+            self.assertEqual(summary["COLD"]["successful"], 1)
+            self.assertEqual(summary["WARM_SERVICES"]["successful"], 1)
             self.assertEqual(before, sorted(processes()))
             for key in first["execution"]:
                 self.assertNotEqual(first["execution"][key], second["execution"][key], key)
